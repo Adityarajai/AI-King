@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI King</title>
     <style>
-        /* CSS remains same as yours - It's perfect! */
         body { font-family: 'Segoe UI', sans-serif; background-color: #0f0f0f; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; }
         h2 { color: #00ffcc; text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); margin-bottom: 20px; }
         #chat-container { width: 100%; max-width: 600px; background: #1a1a1a; border-radius: 15px; padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.8); height: 450px; overflow-y: auto; border: 1px solid #333; display: flex; flex-direction: column; }
@@ -17,15 +16,13 @@
         input:focus { border-color: #00ffcc; }
         button { padding: 0 25px; background-color: #00ffcc; color: #000; border: none; cursor: pointer; font-weight: bold; border-radius: 10px; transition: 0.3s; }
         button:hover { background-color: #00cca3; transform: scale(1.02); }
-        #chat-container::-webkit-scrollbar { width: 6px; }
-        #chat-container::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <h2>--- AI King ---</h2>
 
-    <div id="chat-container" id="chatContainer">
+    <div id="chat-container">
         <div class="message ai-msg">मैं आदित्य का AI हूँ, आपकी क्या मदद कर सकता हूँ?</div>
     </div>
 
@@ -35,54 +32,32 @@
     </div>
 
     <script>
-        // System prompt ko alag rakha hai taaki AI confuse na ho
-        let chatHistory = [{role: "system", content: "तुम्हारा नाम AI King है। तुम आदित्य के AI हो और हमेशा हिंदी में जवाब देते हो।"}];
-
         async function sendMessage() {
             const inputField = document.getElementById('userInput');
-            const chatContainer = document.getElementById('chat-container');
             const message = inputField.value.trim();
-
             if (message === "") return;
 
-            // 1. User Message dikhao
-            appendMessage("आप: " + message, 'user-msg');
+            // 1. User Message Add Karein
+            appendMessage(message, 'user-msg');
             inputField.value = "";
 
-            // 2. History update karo
-            chatHistory.push({role: "user", content: message});
-
-            // 3. Loading indicator
-            const loadingId = "loading-" + Date.now();
-            appendMessage("AI King सोच रहा हूँ...", 'ai-msg', loadingId);
+            // 2. Loading Placeholder
+            const loadingId = "id-" + Date.now();
+            appendMessage("AI King सोच रहा है...", 'ai-msg', loadingId);
 
             try {
-                // Pollinations AI expects prompt as the last part of URL
-                // Hum puri history ko ek string mein convert karke bhej rahe hain
-                const promptString = chatHistory.map(m => `${m.role}: ${m.content}`).join("\n");
-                const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(promptString)}`);
+                // Pollinations API Call
+                const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(message)}?system=${encodeURIComponent("तुम आदित्य के AI हो, तुम्हारा नाम AI King है और तुम हमेशा हिंदी में जवाब देते हो")}`);
                 
-                if (!response.ok) throw new Error("Network issues");
-                
+                if (!response.ok) throw new Error();
                 const aiReply = await response.text();
 
-                // 4. Loading hatakar asli reply dikhao
-                const loadingDiv = document.getElementById(loadingId);
-                loadingDiv.innerText = aiReply;
-
-                chatHistory.push({role: "assistant", content: aiReply});
-
-                // History clean up (last 10 messages)
-                if (chatHistory.length > 11) {
-                    chatHistory.splice(1, 1); 
-                }
+                // 3. Loading text ko asli reply se badal dein
+                document.getElementById(loadingId).innerText = aiReply;
 
             } catch (error) {
-                console.error(error);
-                document.getElementById(loadingId).innerText = "माफ़ कीजिये, सर्वर से संपर्क नहीं हो पाया।";
+                document.getElementById(loadingId).innerText = "सर्वर बिजी है, कृपया दोबारा कोशिश करें।";
             }
-
-            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function appendMessage(text, className, id = null) {

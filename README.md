@@ -1,2 +1,103 @@
-# AI-King
-The era of the AI King is here! 👑 Maine is project ko isliye banaya taaki har kisi ke paas ek powerful AI assistant ho jo unka waqt bacha sake. Built by a developer for the creators. 🚀 Check it out now: adityaraj.tiiny.site #AIKing #AdityaRaj #ArtificialIntelligence #TechInnovation #CodingLife #IndianDeveloper #BuildInPublic
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI King</title>
+    <style>
+        /* CSS remains same as yours - It's perfect! */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #0f0f0f; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; }
+        h2 { color: #00ffcc; text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); margin-bottom: 20px; }
+        #chat-container { width: 100%; max-width: 600px; background: #1a1a1a; border-radius: 15px; padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.8); height: 450px; overflow-y: auto; border: 1px solid #333; display: flex; flex-direction: column; }
+        .message { margin-bottom: 15px; padding: 12px 16px; border-radius: 10px; line-height: 1.5; max-width: 85%; word-wrap: break-word; font-size: 15px; }
+        .user-msg { background-color: #005c4b; align-self: flex-end; border-bottom-right-radius: 2px; color: white; }
+        .ai-msg { background-color: #2c2c2c; align-self: flex-start; border-bottom-left-radius: 2px; border-left: 3px solid #00ffcc; }
+        .input-area { margin-top: 15px; display: flex; width: 100%; max-width: 600px; gap: 10px; }
+        input { flex: 1; padding: 15px; border-radius: 10px; border: 1px solid #444; background: #252525; color: white; outline: none; font-size: 16px; }
+        input:focus { border-color: #00ffcc; }
+        button { padding: 0 25px; background-color: #00ffcc; color: #000; border: none; cursor: pointer; font-weight: bold; border-radius: 10px; transition: 0.3s; }
+        button:hover { background-color: #00cca3; transform: scale(1.02); }
+        #chat-container::-webkit-scrollbar { width: 6px; }
+        #chat-container::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>--- AI King ---</h2>
+
+    <div id="chat-container" id="chatContainer">
+        <div class="message ai-msg">मैं आदित्य का AI हूँ, आपकी क्या मदद कर सकता हूँ?</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="यहाँ संदेश लिखें..." onkeypress="handleKeyPress(event)" autocomplete="off">
+        <button onclick="sendMessage()">भेजें</button>
+    </div>
+
+    <script>
+        // System prompt ko alag rakha hai taaki AI confuse na ho
+        let chatHistory = [{role: "system", content: "तुम्हारा नाम AI King है। तुम आदित्य के AI हो और हमेशा हिंदी में जवाब देते हो।"}];
+
+        async function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const chatContainer = document.getElementById('chat-container');
+            const message = inputField.value.trim();
+
+            if (message === "") return;
+
+            // 1. User Message dikhao
+            appendMessage("आप: " + message, 'user-msg');
+            inputField.value = "";
+
+            // 2. History update karo
+            chatHistory.push({role: "user", content: message});
+
+            // 3. Loading indicator
+            const loadingId = "loading-" + Date.now();
+            appendMessage("AI King सोच रहा हूँ...", 'ai-msg', loadingId);
+
+            try {
+                // Pollinations AI expects prompt as the last part of URL
+                // Hum puri history ko ek string mein convert karke bhej rahe hain
+                const promptString = chatHistory.map(m => `${m.role}: ${m.content}`).join("\n");
+                const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(promptString)}`);
+                
+                if (!response.ok) throw new Error("Network issues");
+                
+                const aiReply = await response.text();
+
+                // 4. Loading hatakar asli reply dikhao
+                const loadingDiv = document.getElementById(loadingId);
+                loadingDiv.innerText = aiReply;
+
+                chatHistory.push({role: "assistant", content: aiReply});
+
+                // History clean up (last 10 messages)
+                if (chatHistory.length > 11) {
+                    chatHistory.splice(1, 1); 
+                }
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById(loadingId).innerText = "माफ़ कीजिये, सर्वर से संपर्क नहीं हो पाया।";
+            }
+
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function appendMessage(text, className, id = null) {
+            const chatContainer = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = "message " + className;
+            if(id) div.id = id;
+            div.innerText = text;
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+    </script>
+</body>
+</html>

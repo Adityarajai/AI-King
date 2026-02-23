@@ -73,7 +73,7 @@
         }
         input:focus { border-color: #00ffcc; }
         .btn {
-            padding: 12px;
+            padding: 0 20px;
             background-color: #00ffcc;
             color: #000;
             border: none;
@@ -82,14 +82,20 @@
             border-radius: 10px;
             transition: 0.3s;
         }
-        .btn:hover { background-color: #00cca3; transform: scale(1.05); }
-        .mic-btn { background-color: #ff3b3b; color: white; }
-        .mic-btn.listening { background-color: #ff9f43; animation: pulse 1s infinite; }
-
+        .btn:hover { background-color: #00cca3; transform: scale(1.02); }
+        .mic-btn {
+            background-color: #ff3b3b;
+            color: white;
+            font-size: 20px;
+        }
+        .listening {
+            animation: pulse 1s infinite;
+            background-color: #ff9f43;
+        }
         @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -103,25 +109,38 @@
 
     <div class="input-area">
         <button id="micBtn" class="btn mic-btn" onclick="startRecognition()">🎤</button>
-        <input type="text" id="userInput" placeholder="यहाँ लिखें या बोलें..." onkeypress="handleKeyPress(event)" autocomplete="off">
+        <input type="text" id="userInput" placeholder="यहाँ संदेश लिखें या बोलें..." onkeypress="handleKeyPress(event)" autocomplete="off">
         <button class="btn" onclick="sendMessage()">भेजें</button>
     </div>
 
     <script>
         let chatHistory = ["तुम्हारा नाम AI King है। तुम आदित्य के AI हो और हमेशा हिंदी में जवाब देते हो।"];
 
-        // आवाज़ पहचानने के लिए (Speech Recognition)
+        // आवाज़ पहचानने का सेटअप (Speech Recognition)
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+        let recognition = null;
 
-        if (recognition) {
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
             recognition.lang = 'hi-IN';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                document.getElementById('micBtn').classList.add('listening');
+            };
+
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
                 document.getElementById('userInput').value = transcript;
-                document.getElementById('micBtn').classList.remove('listening');
-                sendMessage(); // बोलने के बाद अपने आप मैसेज भेज दें
+                sendMessage(); // बोलने के बाद ऑटोमैटिक मैसेज भेजें
             };
+
+            recognition.onerror = (event) => {
+                console.error("Mic Error:", event.error);
+                document.getElementById('micBtn').classList.remove('listening');
+                if(event.error === 'not-allowed') alert("माइक की अनुमति (Permission) दें!");
+            };
+
             recognition.onend = () => {
                 document.getElementById('micBtn').classList.remove('listening');
             };
@@ -129,17 +148,23 @@
 
         function startRecognition() {
             if (recognition) {
-                recognition.start();
-                document.getElementById('micBtn').classList.add('listening');
+                try {
+                    recognition.start();
+                } catch(e) {
+                    recognition.stop();
+                }
             } else {
-                alert("आपका ब्राउज़र माइक्रोफ़ोन सपोर्ट नहीं करता।");
+                alert("आपका ब्राउज़र माइक्रोफ़ोन सपोर्ट नहीं करता। Chrome का उपयोग करें।");
             }
         }
 
-        // आवाज़ में बोलने के लिए (Text to Speech)
+        // आवाज़ में जवाब देने का सेटअप (Text to Speech)
         function speak(text) {
+            // बोलने से पहले पुरानी आवाज़ रोकें
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'hi-IN';
+            utterance.rate = 1.0;
             window.speechSynthesis.speak(utterance);
         }
 
@@ -165,14 +190,17 @@
                 const loadingDiv = document.getElementById(loadingId);
                 loadingDiv.innerText = aiReply;
 
-                // AI का जवाब बोलने के लिए
+                // AI का जवाब बोलकर सुनाना
                 speak(aiReply);
 
                 chatHistory.push("AI: " + aiReply);
-                if (chatHistory.length > 10) chatHistory.splice(1, 1);
+
+                if (chatHistory.length > 10) {
+                    chatHistory.splice(1, 1);
+                }
 
             } catch (error) {
-                document.getElementById(loadingId).innerText = "सर्वर एरर!";
+                document.getElementById(loadingId).innerText = "कनेक्शन एरर!";
             }
 
             chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -192,5 +220,6 @@
             if (e.key === 'Enter') sendMessage();
         }
     </script>
+
 </body>
 </html>

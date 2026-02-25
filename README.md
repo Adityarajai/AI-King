@@ -2,12 +2,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI King</title>
+    <title>AI King - Smart Camera</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #000; color: #fff; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #000; color: #fff; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
         header { padding: 15px; text-align: center; border-bottom: 1px solid #333; background: #000; }
         h2 { color: #00ffcc; margin: 0; font-size: 24px; letter-spacing: 2px; }
@@ -18,15 +19,23 @@
         .user-msg { background-color: #2b2b2b; align-self: flex-end; color: #fff; border-bottom-right-radius: 4px; }
         .ai-msg { background-color: #1a1a1a; align-self: flex-start; color: #e0e0e0; border-left: 4px solid #00ffcc; border-bottom-left-radius: 4px; border: 1px solid #333; }
 
-        .input-area { padding: 15px; background: #000; display: flex; gap: 10px; align-items: center; border-top: 1px solid #333; }
+        .input-area { padding: 15px; background: #000; display: flex; gap: 8px; align-items: center; border-top: 1px solid #333; }
         
         input { flex: 1; padding: 14px; border-radius: 25px; border: 1px solid #444; background: #1a1a1a; color: #fff; outline: none; font-size: 16px; }
-        input:focus { border-color: #00ffcc; }
 
         .btn { border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .send-btn { background: #00ffcc; color: #000; padding: 12px 20px; border-radius: 25px; font-weight: bold; }
-        .mic-btn { background: #ff4b2b; color: #fff; width: 50px; height: 50px; border-radius: 50%; font-size: 22px; }
+        .mic-btn { background: #ff4b2b; color: #fff; min-width: 45px; height: 45px; border-radius: 50%; font-size: 20px; }
+        .cam-btn { background: #3498db; color: #fff; min-width: 45px; height: 45px; border-radius: 50%; font-size: 20px; }
         .listening { animation: pulse 1.5s infinite; background: #00ffcc; color: #000; }
+
+        /* Camera UI */
+        #camera-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
+        video { width: 90%; max-width: 500px; border-radius: 15px; border: 2px solid #00ffcc; }
+        .cam-controls { margin-top: 20px; display: flex; gap: 20px; }
+        .cam-action-btn { padding: 15px 30px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; }
+        .capture-btn { background: #00ffcc; color: #000; }
+        .close-btn { background: #e74c3c; color: #fff; }
 
         .speak-btn { background: #333; color: #00ffcc; border: 1px solid #444; padding: 6px 12px; border-radius: 15px; font-size: 12px; margin-top: 10px; cursor: pointer; }
 
@@ -40,45 +49,79 @@
     </header>
 
     <div id="chat-container">
-        <div class="message ai-msg">नमस्ते! मैं आदित्य का AI King हूँ। पूछिए, मैं आज आपकी क्या मदद कर सकता हूँ?</div>
+        <div class="message ai-msg">नमस्ते! मैं AI King हूँ। आप मुझसे लिखकर, बोलकर या फोटो खींचकर (📷) भी सवाल पूछ सकते हैं।</div>
+    </div>
+
+    <div id="camera-modal">
+        <video id="video" autoplay playsinline></video>
+        <div class="cam-controls">
+            <button class="cam-action-btn close-btn" onclick="closeCamera()">बंद करें</button>
+            <button class="cam-action-btn capture-btn" onclick="takePhoto()">फोटो खींचें</button>
+        </div>
+        <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
     <div class="input-area">
+        <button class="btn cam-btn" onclick="openCamera()">📷</button>
         <button id="micBtn" class="btn mic-btn" onclick="toggleMic()">🎤</button>
         <input type="text" id="userInput" placeholder="यहाँ लिखें..." onkeydown="if(event.key==='Enter') sendMessage()">
         <button class="btn send-btn" onclick="sendMessage()">भेजें</button>
     </div>
 
     <script>
-        let chatHistory = ["तुम AI King हो, जिसे आदित्य ने बनाया है। हमेशा स्पष्ट हिंदी में जवाब दो।"];
+        let chatHistory = ["तुम AI King हो। हमेशा हिंदी में जवाब दो।"];
 
-        // 1. Mic Fix
+        // 1. Camera Logic
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const modal = document.getElementById('camera-modal');
+
+        async function openCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+                modal.style.display = 'flex';
+            } catch (err) { alert("कैमरा एक्सेस नहीं मिला!"); }
+        }
+
+        function closeCamera() {
+            const stream = video.srcObject;
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            modal.style.display = 'none';
+        }
+
+        async function takePhoto() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            appendMsg("फोटो प्रोसेस की जा रही है...", 'user-msg');
+            closeCamera();
+
+            // OCR (Text Recognition)
+            Tesseract.recognize(canvas.toDataURL(), 'hin+eng')
+                .then(({ data: { text } }) => {
+                    document.getElementById('userInput').value = text.trim();
+                    appendMsg("मैंने यह पढ़ा: " + text.trim(), 'ai-msg');
+                })
+                .catch(err => { appendMsg("फोटो से टेक्स्ट नहीं पढ़ पाया!", 'ai-msg'); });
+        }
+
+        // 2. Mic Logic
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = 'hi-IN';
         let isListening = false;
 
         function toggleMic() {
-            if (!isListening) {
-                try { recognition.start(); } catch(e) {}
-            } else {
-                recognition.stop();
-            }
+            if (!isListening) { try { recognition.start(); } catch(e) {} }
+            else { recognition.stop(); }
         }
 
-        recognition.onstart = () => {
-            isListening = true;
-            document.getElementById('micBtn').classList.add('listening');
-        };
-        recognition.onresult = (e) => {
-            document.getElementById('userInput').value = e.results[0][0].transcript;
-            sendMessage();
-        };
-        recognition.onend = () => {
-            isListening = false;
-            document.getElementById('micBtn').classList.remove('listening');
-        };
+        recognition.onstart = () => { isListening = true; document.getElementById('micBtn').classList.add('listening'); };
+        recognition.onresult = (e) => { document.getElementById('userInput').value = e.results[0][0].transcript; sendMessage(); };
+        recognition.onend = () => { isListening = false; document.getElementById('micBtn').classList.remove('listening'); };
 
-        // 2. Speaker Fix
+        // 3. Speaker Logic
         function speak(text) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
@@ -86,12 +129,11 @@
             window.speechSynthesis.speak(msg);
         }
 
-        // 3. Send Function Fix
+        // 4. Message Logic
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const chat = document.getElementById('chat-container');
             const text = input.value.trim();
-            
             if (!text) return;
 
             appendMsg(text, 'user-msg');
@@ -102,20 +144,13 @@
             appendMsg("AI King सोच रहा है...", 'ai-msg', aiId);
 
             try {
-                // Simplified API URL to avoid breaking
                 const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(chatHistory.join("\n"))}?model=openai`);
                 const data = await res.text();
-
                 const aiBox = document.getElementById(aiId);
                 aiBox.innerHTML = `<div>${data}</div><button class="speak-btn" onclick="speak(\`${data.replace(/['"`]/g, '')}\`)">🔊 जवाब सुनें</button>`;
-                
-                // Math rendering
                 if (window.MathJax) MathJax.typesetPromise([aiBox]);
-                
                 chatHistory.push("AI: " + data);
-            } catch (err) {
-                document.getElementById(aiId).innerText = "माफी चाहता हूँ, सर्वर में समस्या है।";
-            }
+            } catch (err) { document.getElementById(aiId).innerText = "सर्वर एरर!"; }
             chat.scrollTop = chat.scrollHeight;
         }
 

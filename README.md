@@ -2,19 +2,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI King - Fixed Scroll</title>
+    <title>AI King - Fixed Scroll Hindi</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-        /* Base Setup */
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         html, body { 
             height: 100%; 
             width: 100%; 
             background-color: #000; 
             color: #fff; 
-            font-family: -apple-system, sans-serif;
-            overflow: hidden; /* Main body scroll block rahega */
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden; /* Body scroll block taaki container scroll kare */
+            position: fixed; /* Screen ko hilne se rokne ke liye */
         }
 
         body { display: flex; flex-direction: column; }
@@ -28,10 +29,11 @@
         }
         h2 { color: #00ffcc; font-size: 20px; letter-spacing: 1px; }
 
-        /* SCROLL FIX: Is container ki height fix hai taaki scrolling lock na ho */
+        /* SCROLL FIX: Is area ko touch-friendly banaya gaya hai */
         #chat-container { 
             flex: 1; 
-            overflow-y: auto; /* Sirf ye area scroll hoga */
+            overflow-y: scroll; 
+            overflow-x: hidden;
             padding: 15px; 
             display: flex; 
             flex-direction: column; 
@@ -39,13 +41,13 @@
             background: #000;
             width: 100%;
             -webkit-overflow-scrolling: touch; /* iOS smooth scroll */
+            touch-action: pan-y; /* Sirf upar-neeche scroll ki ijazat */
         }
         
-        .message { padding: 12px 16px; border-radius: 20px; line-height: 1.5; max-width: 85%; word-wrap: break-word; font-size: 16px; }
+        .message { padding: 12px 16px; border-radius: 18px; line-height: 1.5; max-width: 85%; word-wrap: break-word; font-size: 16px; }
         .user-msg { background-color: #2b2b2b; align-self: flex-end; border-bottom-right-radius: 4px; }
         .ai-msg { background-color: #1a1a1a; align-self: flex-start; border: 1px solid #333; border-left: 4px solid #00ffcc; border-bottom-left-radius: 4px; }
 
-        /* Input area hamesha bottom par rahega */
         .input-area { 
             padding: 10px 10px 25px 10px; 
             background: #111; 
@@ -59,8 +61,8 @@
         input { flex: 1; padding: 12px 15px; border-radius: 25px; border: 1px solid #444; background: #1a1a1a; color: #fff; outline: none; font-size: 16px; }
 
         .btn { border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-        .icon-btn { width: 40px; height: 40px; background: #333; color: #fff; font-size: 18px; }
-        .mic-btn { background: #ff4b2b; width: 40px; height: 40px; }
+        .icon-btn { width: 40px; height: 40px; background: #333; color: #fff; }
+        .mic-btn { background: #ff4b2b; }
         .send-btn { background: #00ffcc; color: #000; border-radius: 20px; padding: 0 15px; font-weight: bold; height: 38px; }
         .listening { animation: pulse 1s infinite; background: #00ffcc; color: #000; }
 
@@ -75,44 +77,41 @@
     <header><h2>AI King</h2></header>
 
     <div id="chat-container">
-        <div class="message ai-msg">Mai Aditya ka AI hu, mai aap ke liye kya kar sakta hun?</div>
+        <div class="message ai-msg">मैं आदित्य का AI हूँ, मैं आपके लिए क्या कर सकता हूँ?</div>
     </div>
 
     <div id="cam-modal">
         <video id="video" autoplay playsinline></video>
         <div style="padding: 20px; display: flex; gap: 20px;">
-            <button class="send-btn" style="background:#ff4b2b; color:#fff;" onclick="closeCam()">Cancel</button>
-            <button class="send-btn" onclick="takeShot()">Capture</button>
+            <button class="send-btn" style="background:#ff4b2b; color:#fff;" onclick="closeCam()">बंद करें</button>
+            <button class="send-btn" onclick="takeShot()">फोटो लें</button>
         </div>
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
     <div class="input-area">
         <button class="btn icon-btn" onclick="openCam()">📷</button>
-        <button id="micBtn" class="btn mic-btn" onclick="startVoice()">🎤</button>
-        <input type="text" id="userInput" placeholder="Message..." onkeydown="if(event.key==='Enter') send()">
-        <button class="btn send-btn" onclick="send()">Bhejen</button>
+        <button id="micBtn" class="btn icon-btn mic-btn" onclick="startVoice()">🎤</button>
+        <input type="text" id="userInput" placeholder="संदेश लिखें..." onkeydown="if(event.key==='Enter') send()">
+        <button class="btn send-btn" onclick="send()">भेजें</button>
     </div>
 
     <script>
-        let history = ["Tum Aditya ke AI ho. Hamesha Hindi mein jawab do."];
+        let history = ["तुम आदित्य के AI हो। हमेशा हिंदी में जवाब दो।"];
         const chatBox = document.getElementById('chat-container');
 
-        // Scroll Function: Hamesha bottom par scroll karega
         function scrollToBottom() {
-            chatBox.scrollTo({
-                top: chatBox.scrollHeight,
-                behavior: 'smooth'
-            });
+            setTimeout(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 100);
         }
 
-        // Camera
         async function openCam() {
             try {
                 const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 document.getElementById('video').srcObject = s;
                 document.getElementById('cam-modal').style.display = 'flex';
-            } catch (e) { alert("Camera Permission Blocked"); }
+            } catch (e) { alert("कैमरा परमिशन नहीं मिली"); }
         }
 
         function closeCam() {
@@ -128,17 +127,15 @@
             c.getContext('2d').drawImage(v, 0, 0);
             appendImg(c.toDataURL('image/png'));
             closeCam();
-            send("Photo received.");
+            send("मैंने एक फोटो भेजी है।");
         }
 
-        // Voice
         const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         rec.lang = 'hi-IN';
         function startVoice() { try { rec.start(); document.getElementById('micBtn').classList.add('listening'); } catch(e){} }
         rec.onresult = (e) => { document.getElementById('userInput').value = e.results[0][0].transcript; send(); };
         rec.onend = () => document.getElementById('micBtn').classList.remove('listening');
 
-        // Messaging
         async function send(overrideText) {
             const input = document.getElementById('userInput');
             const val = overrideText || input.value.trim();
@@ -149,7 +146,7 @@
             history.push("User: " + val);
 
             const id = "ai-" + Date.now();
-            appendMsg("AI King soch raha hai...", 'ai-msg', id);
+            appendMsg("AI King सोच रहा है...", 'ai-msg', id);
 
             try {
                 const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(history.join("\n"))}?model=openai`);
@@ -158,7 +155,7 @@
                 box.innerHTML = `<div>${d}</div>`;
                 if (window.MathJax) MathJax.typesetPromise([box]);
                 history.push("AI: " + d);
-            } catch (e) { document.getElementById(id).innerText = "Error!"; }
+            } catch (e) { document.getElementById(id).innerText = "त्रुटि!"; }
             
             scrollToBottom();
         }

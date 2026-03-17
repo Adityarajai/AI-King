@@ -522,4 +522,35 @@ async function send(){
     loading.innerHTML="";
     await typeText(loading,reply);
     saveToHistory(userText,reply);
-   
+   speak(reply);
+    setStatus("✅ जवाब दिया गया");
+  }catch(err){
+    loading.textContent="❌ Server error — दोबारा कोशिश करो";
+    setStatus("❌ Error हुई");
+  }
+}
+
+// ── ALL EVENT LISTENERS (after all functions defined) ──
+document.getElementById("history-btn").addEventListener("click", toggleHistory);
+document.getElementById("clear-btn").addEventListener("click", clearChat);
+document.getElementById("close-history-btn").addEventListener("click", toggleHistory);
+document.getElementById("clear-history-btn").addEventListener("click", clearHistory);
+document.getElementById("capture-btn").addEventListener("click", capturePhoto);
+document.getElementById("close-cam-btn").addEventListener("click", closeCamera);
+document.getElementById("send-btn").addEventListener("click", send);
+document.getElementById("mic-btn").addEventListener("click", toggleMic);
+document.getElementById("cam-btn").addEventListener("click", toggleCamera);
+document.querySelector("header").addEventListener("dblclick", stopSpeech);
+
+inputEl.addEventListener("input", () => {
+  inputEl.style.height = "auto";
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+});
+inputEl.addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); }
+});
+
+}); // end DOMContentLoaded
+</script>
+</body>
+</html>

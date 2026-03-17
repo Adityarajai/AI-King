@@ -110,9 +110,10 @@ header{
 }
 
 #chat{
-  flex:1;min-height:0;overflow-y:auto;
+  flex:1;min-height:0;overflow-y:scroll;
   padding:18px;display:flex;flex-direction:column;gap:14px;
-  position:relative;z-index:10;scroll-behavior:smooth;
+  position:relative;z-index:10;
+  overscroll-behavior:contain;
 }
 #chat::-webkit-scrollbar{width:4px}
 #chat::-webkit-scrollbar-track{background:transparent}
@@ -319,8 +320,8 @@ const statusText = document.getElementById("status-text");
 const voiceWave  = document.getElementById("voice-wave");
 const speakInd   = document.getElementById("speak-indicator");
 
-function nearBottom(){ return chat.scrollHeight - chat.scrollTop - chat.clientHeight < 150; }
-function scrollBottom(){ chat.scrollTop = chat.scrollHeight; }
+function nearBottom(){ return chat.scrollHeight - chat.scrollTop - chat.clientHeight < 200; }
+function scrollBottom(){ requestAnimationFrame(function(){ chat.scrollTop = chat.scrollHeight + 9999; }); }
 
 function showToast(msg){
   const t = document.getElementById("toast");
@@ -365,7 +366,7 @@ async function typeText(el, text, speed=18){
   el.classList.add("typing-cursor"); el.textContent = "";
   for(let i=0; i<text.length; i++){
     el.textContent += text[i];
-    if(nearBottom()) scrollBottom();
+    scrollBottom();
     await new Promise(r => setTimeout(r, speed));
   }
   el.classList.remove("typing-cursor");
@@ -522,7 +523,7 @@ async function send(){
     loading.innerHTML="";
     await typeText(loading,reply);
     saveToHistory(userText,reply);
-   speak(reply);
+    speak(reply);
     setStatus("✅ जवाब दिया गया");
   }catch(err){
     loading.textContent="❌ Server error — दोबारा कोशिश करो";

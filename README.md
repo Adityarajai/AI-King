@@ -449,7 +449,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var recognition = null, isRecording = false;
 
   function toggleMic() {
-    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
       showToast("❌ यह browser voice support नहीं करता"); return;
     }
     if (isRecording) { recognition.stop(); return; }
@@ -541,13 +541,18 @@ document.addEventListener("DOMContentLoaded", function () {
     window.speechSynthesis.cancel(); speakInd.classList.remove("active"); showToast("🔇 Voice रोका गया");
   }
 
+  /* ── CONVERSATION MEMORY ── */
+  var conversationMemory = [];
+
   /* ── SEND ── */
   async function send() {
     var v = inputEl.value.trim();
     if (!v && !capturedImage) return;
     var userText = v || "📸 यह फोटो देखो";
+
     if (capturedImage) { addMsg("📸 Photo भेजा", "user", capturedImage); }
     else { addMsg(v, "user"); }
+
     inputEl.value = ""; inputEl.style.height = "auto";
     var imgCopy = capturedImage; capturedImage = null;
     var prev = document.getElementById("img-preview"); if (prev) prev.remove();
@@ -560,17 +565,66 @@ document.addEventListener("DOMContentLoaded", function () {
     setStatus("🤔 सोच रहा हूँ...", true);
 
     try {
-      var prompt = v || "इस image में क्या है?";
-      if (imgCopy) prompt += " [User sent image - describe in Hindi]";
-      var res = await fetch("https://text.pollinations.ai/" + encodeURIComponent(prompt));
-      var reply = await res.text();
+      var reply = "";
+
+      if (imgCopy) {
+        /* IMAGE: Anthropic API real image read kar sakta hai */
+        var base64Data = imgCopy.split(",")[1];
+        var mediaType  = imgCopy.split(";")[0].split(":")[1];
+
+        var res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1000,
+            system: "Tum Aditya Raj ke personal AI ho jinka naam AI King hai. Hamesha Hindi mein jawab do. Image ko dhyan se dekho aur clearly describe karo.",
+            messages: [{
+              role: "user",
+              content: [
+                { type: "image", source: { type: "base64", media_type: mediaType, data: base64Data } },
+                { type: "text",  text: v ? v : "Is image mein kya hai? Hindi mein batao." }
+              ]
+            }]
+          })
+        });
+        var data = await res.json();
+        reply = (data.content && data.content[0]) ? data.content[0].text : "Image samajh nahi aaya.";
+
+        conversationMemory.push({ role:"user",      content: userText });
+        conversationMemory.push({ role:"assistant", content: reply });
+
+      } else {
+        /* TEXT: full conversation memory ke saath */
+        var messages = conversationMemory.concat([{ role:"user", content: v }]);
+
+        var res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1000,
+            system: "Tum Aditya Raj ke personal AI ho jinka naam AI King hai. Hamesha Hindi mein jawab do. Pichli baatein yaad rakho aur context ke saath jawab do.",
+            messages: messages
+          })
+        });
+        var data = await res.json();
+        reply = (data.content && data.content[0]) ? data.content[0].text : "Kuch samajh nahi aaya.";
+
+        conversationMemory.push({ role:"user",      content: v });
+        conversationMemory.push({ role:"assistant", content: reply });
+
+        if (conversationMemory.length > 40) conversationMemory = conversationMemory.slice(-40);
+      }
+
       loading.innerHTML = "";
       await typeText(loading, reply);
       saveToHistory(userText, reply);
       speak(reply);
       setStatus("✅ जवाब दिया गया");
+
     } catch(err) {
-      loading.textContent = "❌ Server error — दोबारा कोशिश करो";
+      loading.textContent = "❌ Error: " + (err.message || "Server se jawab nahi mila");
       setStatus("❌ Error हुई");
       scrollToBottom();
     }

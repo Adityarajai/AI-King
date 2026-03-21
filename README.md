@@ -569,28 +569,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (imgCopy) {
         /* IMAGE MODE — Pollinations vision endpoint */
-        var res = await fetch("https://text.pollinations.ai/", {
+        var res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": "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",
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true"
+          },
           body: JSON.stringify({
-            model: "openai",
-            messages: [
-              {
-                role: "system",
-                content: "Tum Aditya Raj ke personal AI ho jinka naam AI King hai. Hamesha Hindi mein jawab do. Image dhyan se dekho aur clearly describe karo."
-              },
-              {
-                role: "user",
-                content: [
-                  { type: "image_url", image_url: { url: imgCopy } },
-                  { type: "text", text: v ? v : "Is image mein kya hai? Hindi mein detail mein batao." }
-                ]
-              }
-            ]
+            model: "claude-opus-4-5",
+            max_tokens: 1024,
+            system: "Tum Aditya Raj ke personal AI ho jinka naam AI King hai. Hamesha Hindi mein jawab do. Image dhyan se dekho aur clearly describe karo.",
+            messages: [{
+              role: "user",
+              content: [
+                { type: "image", source: { type: "base64", media_type: mediaType, data: base64Data } },
+                { type: "text", text: v ? v : "Is image mein kya hai? Hindi mein detail mein batao." }
+              ]
+            }]
           })
         });
-        reply = await res.text();
-        if (!reply || reply.trim() === "") reply = "Image samajh nahi aaya, dobara try karo.";
+        var data = await res.json();
+        reply = (data.content && data.content[0]) ? data.content[0].text : "Image samajh nahi aaya, dobara try karo.";
 
         conversationMemory.push({ role:"user",      content: userText });
         conversationMemory.push({ role:"assistant", content: reply });
@@ -607,13 +608,23 @@ document.addEventListener("DOMContentLoaded", function () {
           [{ role: "user", content: v }]
         );
 
-        var res = await fetch("https://text.pollinations.ai/", {
+        var res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "openai", messages: messages })
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": "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",
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true"
+          },
+          body: JSON.stringify({
+            model: "claude-opus-4-5",
+            max_tokens: 1024,
+            system: "Tum Aditya Raj ke personal AI ho jinka naam AI King hai. Hamesha Hindi mein jawab do. Pichli baatein yaad rakho aur context ke saath jawab do.",
+            messages: messages
+          })
         });
-        reply = await res.text();
-        if (!reply || reply.trim() === "") reply = "Jawab nahi mila, dobara try karo.";
+        var data = await res.json();
+        reply = (data.content && data.content[0]) ? data.content[0].text : "Jawab nahi mila, dobara try karo.";
 
         conversationMemory.push({ role:"user",      content: v });
         conversationMemory.push({ role:"assistant", content: reply });

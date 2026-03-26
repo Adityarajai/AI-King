@@ -1,226 +1,142 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Class 9th Study AI</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&family=Sora:wght@400;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI King 👑 - Illusion AI</title>
 <style>
-  :root { --bg: #0a0b0f; --surface: #12141a; --border: #252836; --accent: #6c63ff; --text: #e8eaf0; --muted: #7a7f9a; }
-  
-  /* Full Screen Fix for Mobile Chrome */
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body, html { 
-    background: var(--bg); 
-    color: var(--text); 
-    font-family: 'Noto Sans Devanagari', sans-serif; 
-    height: 100dvh; 
-    width: 100vw;
-    overflow: hidden; 
-  }
-
-  body { display: flex; flex-direction: column; }
-
-  .header { 
-    padding: 15px; 
-    background: var(--surface); 
-    border-bottom: 2px solid var(--accent); 
-    text-align: center; 
-    font-size: 18px; 
-    font-weight: bold;
-    flex-shrink: 0;
-  }
-
-  .topics-bar { 
-    display: flex; 
-    gap: 10px; 
-    padding: 10px; 
-    background: var(--surface); 
-    border-bottom: 1px solid var(--border); 
-    overflow-x: auto; 
-    scrollbar-width: none; 
-    flex-shrink: 0;
-  }
-  .topic-chip { 
-    padding: 8px 16px; 
-    background: #1a1d26; 
-    border: 1px solid var(--border); 
-    border-radius: 20px; 
-    font-size: 12px; 
-    white-space: nowrap; 
-    cursor: pointer;
-  }
-
-  /* Scrollable Chat Area */
-  .chat-area { 
-    flex: 1; 
-    overflow-y: auto; 
-    padding: 20px; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px; 
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .message { display: flex; gap: 10px; max-width: 100%; }
-  .message.user { flex-direction: row-reverse; }
-  .bubble { 
-    padding: 12px 16px; 
-    border-radius: 15px; 
-    font-size: 14px; 
-    line-height: 1.6; 
-    max-width: 85%; 
-    white-space: pre-wrap; 
-  }
-  .bubble.user { background: var(--accent); border-bottom-right-radius: 2px; }
-  .bubble.ai { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
-
-  .num-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-  .num-btn { 
-    background: var(--border); 
-    color: white; 
-    border: none; 
-    padding: 12px; 
-    border-radius: 8px; 
-    text-align: left; 
-    font-size: 14px;
-    cursor: pointer;
-  }
-
-  /* Fixed Input Box at Bottom */
-  .input-area { 
-    padding: 12px 15px; 
-    background: var(--surface); 
-    border-top: 1px solid var(--border); 
-    flex-shrink: 0;
-  }
-  .input-box { 
-    display: flex; 
-    gap: 10px; 
-    background: #1a1d26; 
-    padding: 5px 15px; 
-    border-radius: 25px; 
-    border: 1px solid var(--border); 
-  }
-  textarea { 
-    flex: 1; 
-    background: none; 
-    border: none; 
-    color: white; 
-    resize: none; 
-    outline: none; 
-    padding: 10px 0; 
-    font-size: 15px; 
-    max-height: 80px;
-  }
-  .send-btn { 
-    background: var(--accent); 
-    border: none; 
-    color: white; 
-    width: 40px; 
-    height: 40px; 
-    border-radius: 50%; 
-    cursor: pointer; 
-    align-self: center;
-  }
+:root {--bg:#0a0b0f; --surface:#12141a; --border:#252836; --accent:#6c63ff; --text:#e8eaf0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{height:100vh;background:var(--bg);color:var(--text);font-family:sans-serif;display:flex;flex-direction:column;}
+.header{padding:15px;background:var(--surface);text-align:center;font-size:18px;font-weight:bold;border-bottom:2px solid var(--accent);}
+.topics-bar{display:flex;gap:10px;padding:10px;overflow-x:auto;background:var(--surface);}
+.topic-chip{padding:8px 15px;border-radius:20px;background:#1a1d26;cursor:pointer;font-size:12px;}
+.chat-area{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;}
+.input-area{padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:5px;}
+textarea{width:100%;padding:10px;border-radius:10px;border:none;outline:none;}
+button{padding:10px 15px;border:none;border-radius:10px;background:var(--accent);color:var(--text);cursor:pointer;font-size:14px;transition:0.2s;}
+button:hover{background:#574fd1;}
+.message{background:#1a1d26;padding:10px 12px;border-radius:10px;margin:5px 0;align-self:flex-start;}
+.message.user{background:#6c63ff;color:#fff;align-self:flex-end;}
+.qa-item{margin-bottom:10px;padding:10px;border:1px solid var(--border);border-radius:10px;}
+.qa-q{color:var(--accent);font-weight:bold;}
+.qa-a{font-size:13px;}
 </style>
 </head>
 <body>
 
-<div class="header">Class 9th Study AI 🎓</div>
-
-<div class="topics-bar">
-  <div class="topic-chip" onclick="show100('विज्ञान')">🌿 विज्ञान (100 Q&A)</div>
-  <div class="topic-chip" onclick="show100('हिंदी')">📖 हिंदी (100 Q&A)</div>
-  <div class="topic-chip" onclick="askTopic('Letter to Father')">✉️ पिता को पत्र</div>
-  <div class="topic-chip" onclick="askTopic('Leave Application')">📝 छुट्टी आवेदन</div>
-</div>
-
-<div class="chat-area" id="chat">
-  <div id="welcome" style="text-align:center; padding:40px 10px;">
-    <h3>नमस्ते! मैं Class 9th Study AI हूँ</h3>
-    <p style="color: var(--muted); margin-top: 10px;">Yahan Class 9th ke sabhi 100 sawalon ke jawab aur translation milega.</p>
-  </div>
-</div>
-
+<div class="header">👑 AI King - Illusion AI</div>
+<div class="topics-bar" id="topicsBar"></div>
+<div class="chat-area" id="chat"><div style="text-align:center">👑 Welcome to AI King (Illusion)</div></div>
 <div class="input-area">
-  <div class="input-box">
-    <textarea id="userInput" placeholder="Translate (is, have) ya number likhen..." rows="1"></textarea>
-    <button class="send-btn" onclick="sendMessage()">➤</button>
-  </div>
+<textarea id="input" placeholder="कुछ लिखें..."></textarea>
+<button onclick="sendMessage()">Send</button>
 </div>
 
 <script>
-// --- REAL 100 QUESTIONS NAMES ---
-const qNames = {
-  "विज्ञान": ["कोशिका की संरचना", "ऊतक (Tissue)", "जड़त्व का नियम", "गुरुत्वाकर्षण बल", "कार्य और ऊर्जा", "ध्वनि की चाल", "परमाणु का नाभिक", "संवेग", "शक्ति", "मिश्रण का पृथक्करण"],
-  "हिंदी": ["संज्ञा के प्रकार", "सर्वनाम की परिभाषा", "समास क्या है", "संधि विच्छेद", "कारक चिन्ह", "मुहावरे", "लेखक परिचय", "पर्यायवाची", "विलोम शब्द", "निबंध लेखन"]
+// Sample Q&A offline
+const sampleData={
+"विज्ञान":[
+{q:"कोशिका क्या है?",a:"जीवन की सबसे छोटी इकाई।"},
+{q:"गुरुत्वाकर्षण क्या है?",a:"दो पिंडों के बीच आकर्षण बल।"}
+],
+"गणित":[
+{q:"पाई का मान?",a:"22/7 या 3.14"},
+{q:"वर्ग क्या है?",a:"समान भुजाओं वाला चतुर्भुज"}
+],
+"हिंदी":[
+{q:"संज्ञा क्या है?",a:"नाम को संज्ञा कहते हैं"},
+{q:"क्रिया क्या है?",a:"कार्य बताने वाले शब्द"}
+],
+"अंग्रेज़ी":[
+{q:"What is noun?",a:"Name of person/place/thing"},
+{q:"What is verb?",a:"Action word"}
+],
+"सामाजिक विज्ञान":[
+{q:"लोकतंत्र क्या है?",a:"जनता द्वारा शासन"},
+{q:"संविधान क्या है?",a:"देश का सर्वोच्च कानून"}
+]
 };
 
-// --- DICTIONARY ---
-const dict = {
-  "is": "है", "am": "हूँ", "are": "हैं / हो", "have": "पास है", "has": "पास है", "had": "पास था",
-  "was": "था / थी", "were": "थे / थीं", "school": "विद्यालय", "नमस्ते": "Hello", "क्या": "What"
-};
+// Topics buttons
+const subjects=Object.keys(sampleData);
+const topicsBar=document.getElementById('topicsBar');
+subjects.forEach(sub=>{
+  let btn=document.createElement('div');
+  btn.className='topic-chip';
+  btn.innerText=sub;
+  btn.onclick=()=>showSampleQ(sub);
+  topicsBar.appendChild(btn);
+});
+let letterBtn=document.createElement('div');
+letterBtn.className='topic-chip';
+letterBtn.innerText='✉️ पत्र';
+letterBtn.onclick=showLetter;
+topicsBar.appendChild(letterBtn);
 
-// --- ANSWERS ENGINE ---
-const fullAnswers = {};
-function setupDB() {
-  ["विज्ञान", "हिंदी"].forEach(sub => {
-    for(let i=1; i<=100; i++) {
-      let title = qNames[sub][i-1] || sub + " महत्वपूर्ण प्रश्न " + i;
-      fullAnswers[sub + i] = `**प्रश्न ${i}: ${title}**\n\n**उत्तर:** Class 9th ke Bihar Board syllabus ke anusar, ${title} ka ye sawal board pariksha ke liye zaruri hai. Iska pura hal aapke Chapter ${Math.ceil(i/10)} mein hai.`;
-    }
+// Show sample Q&A
+function showSampleQ(sub){
+  let html=`<h3>${sub} - Sample Questions</h3>`;
+  sampleData[sub].forEach((item,i)=>{
+    html+=`<div class="qa-item"><div class="qa-q">${i+1}. ${item.q}</div><div class="qa-a">उत्तर: ${item.a}</div></div>`;
   });
-  // Special Answers
-  fullAnswers["विज्ञान1"] = "**1. कोशिका (Cell):** Ye jeevan ki sabse chhoti ikayi hai. Khoj: Robert Hooke.";
-}
-setupDB();
-
-function addMsg(text, role) {
-  const chat = document.getElementById('chat');
-  if(document.getElementById('welcome')) document.getElementById('welcome').style.display='none';
-  const div = document.createElement('div');
-  div.className = 'message ' + role;
-  div.innerHTML = `<div class="bubble ${role}">${text}</div>`;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
+  document.getElementById("chat").innerHTML=html;
+  scrollChat();
 }
 
-function show100(sub) {
-  window.currentSub = sub;
-  let list = `<p><strong>${sub} के 100 प्रश्न (Answer ke liye click karein):</strong></p><div class="num-grid">`;
-  for(let i=1; i<=100; i++) {
-    let name = qNames[sub][i-1] || sub + " प्रश्न " + i;
-    list += `<button class="num-btn" onclick="askNumber('${i}')">${i}. ${name}</button>`;
+// Letters
+function showLetter(){
+  let txt=`<b>पिता जी को पत्र:</b><br><br>आदरणीय पिताजी,<br>सादर प्रणाम। मैं यहाँ कुशल हूँ। आशा है आप भी स्वस्थ होंगे।<br>मुझे 2 दिन की छुट्टी चाहिए क्योंकि मैं बीमार हूँ।<br><br>आपका पुत्र<br>नाम<br><br>
+<b>माता जी को पत्र:</b><br><br>प्रिय माताजी,<br>सादर प्रणाम। मैं ठीक हूँ। आप कैसी हैं?<br>मैं जल्द घर आऊंगा।<br><br>आपका बेटा`;
+  document.getElementById("chat").innerHTML=txt;
+  scrollChat();
+}
+
+// Chat
+function sendMessage(){
+  let input=document.getElementById('input');
+  let msg=input.value.trim();
+  if(msg==="") return;
+  addMessage(msg,'user');
+  input.value='';
+  generateIllusionAnswer(msg);
+}
+
+function addMessage(text,sender){
+  let div=document.createElement('div');
+  div.className='message';
+  if(sender==='user') div.classList.add('user');
+  div.innerHTML=text;
+  document.getElementById('chat').appendChild(div);
+  scrollChat();
+}
+
+function scrollChat(){
+  const chat=document.getElementById('chat');
+  chat.scrollTop=chat.scrollHeight;
+}
+
+// Illusion AI logic
+function generateIllusionAnswer(msg){
+  msg=msg.toLowerCase();
+  // Check sample Q&A
+  for(let sub in sampleData){
+    for(let item of sampleData[sub]){
+      if(msg.includes(item.q.toLowerCase().split(" ")[0])){
+        addMessage(`<b>${item.q}</b><br>उत्तर: ${item.a}`,'ai');
+        return;
+      }
+    }
   }
-  list += `</div>`;
-  addMsg(list, 'ai');
-}
-
-function askNumber(n) { document.getElementById('userInput').value = n; sendMessage(); }
-function askTopic(t) { document.getElementById('userInput').value = t; sendMessage(); }
-
-function sendMessage() {
-  const input = document.getElementById('userInput');
-  const text = input.value.trim();
-  if(!text) return;
-  addMsg(text, 'user');
-  input.value = '';
-
-  let reply = "";
-  const lowText = text.toLowerCase();
-
-  if(!isNaN(text) && window.currentSub) {
-    reply = fullAnswers[window.currentSub + text];
-  } else if(dict[lowText]) {
-    reply = `**Translation:**\n${text} = ${dict[lowText]}`;
-  } else if(lowText.includes("leave") || lowText.includes("आवेदन")) {
-    reply = "**Application:** To the Principal... Subject: Leave for 2 days. Aditya Raj, Class 9.";
-  } else {
-    reply = `Maine "${text}" ko samajh liya hai. Subject select karke 100 sawalon ka jawab dekhein.`;
-  }
-
-  setTimeout(() => addMsg(reply, 'ai'), 400);
+  // Unknown question → generate smart-sounding generic answer
+  const genericAnswers=[
+    "यह एक महत्वपूर्ण प्रश्न है। इसका उत्तर कुछ इस प्रकार हो सकता है।",
+    "मैं इसे समझा रहा हूँ, ध्यान से देखें।",
+    "यह प्रश्न दिलचस्प है। इसका उत्तर खोजा जा रहा है।",
+    "आपके सवाल पर विचार किया गया। इसका उत्तर निम्न है।",
+    "मैंने आपके प्रश्न का विश्लेषण किया और यह उत्तर सुझाया।"
+  ];
+  let randomAnswer=genericAnswers[Math.floor(Math.random()*genericAnswers.length)];
+  addMessage(randomAnswer,'ai');
 }
 </script>
 </body>

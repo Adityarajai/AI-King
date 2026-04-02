@@ -1,143 +1,159 @@
-<html lang="hi">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI King 👑 - Illusion AI</title>
-<style>
-:root {--bg:#0a0b0f; --surface:#12141a; --border:#252836; --accent:#6c63ff; --text:#e8eaf0;}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{height:100vh;background:var(--bg);color:var(--text);font-family:sans-serif;display:flex;flex-direction:column;}
-.header{padding:15px;background:var(--surface);text-align:center;font-size:18px;font-weight:bold;border-bottom:2px solid var(--accent);}
-.topics-bar{display:flex;gap:10px;padding:10px;overflow-x:auto;background:var(--surface);}
-.topic-chip{padding:8px 15px;border-radius:20px;background:#1a1d26;cursor:pointer;font-size:12px;}
-.chat-area{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;}
-.input-area{padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:5px;}
-textarea{width:100%;padding:10px;border-radius:10px;border:none;outline:none;}
-button{padding:10px 15px;border:none;border-radius:10px;background:var(--accent);color:var(--text);cursor:pointer;font-size:14px;transition:0.2s;}
-button:hover{background:#574fd1;}
-.message{background:#1a1d26;padding:10px 12px;border-radius:10px;margin:5px 0;align-self:flex-start;}
-.message.user{background:#6c63ff;color:#fff;align-self:flex-end;}
-.qa-item{margin-bottom:10px;padding:10px;border:1px solid var(--border);border-radius:10px;}
-.qa-q{color:var(--accent);font-weight:bold;}
-.qa-a{font-size:13px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline AI Chatbot</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chat-container {
+            width: 90%;
+            max-width: 400px;
+            height: 600px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #chat-box {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 75%;
+            line-height: 1.4;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .bot-message {
+            background-color: #e9e9eb;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        #input-area {
+            display: flex;
+            border-top: 1px solid #ddd;
+            padding: 10px;
+        }
+        #user-input {
+            flex-grow: 1;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+            outline: none;
+        }
+        #user-input:focus {
+            border-color: #007bff;
+        }
+        #send-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            margin-left: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
 
-<div class="header">👑 AI King - Illusion AI</div>
-<div class="topics-bar" id="topicsBar"></div>
-<div class="chat-area" id="chat"><div style="text-align:center">👑 Welcome to AI King (Illusion)</div></div>
-<div class="input-area">
-<textarea id="input" placeholder="कुछ लिखें..."></textarea>
-<button onclick="sendMessage()">Send</button>
+<div id="chat-container">
+    <div id="chat-box">
+        <div class="message bot-message">Hi there! I'm a simple AI. Ask me something!</div>
+    </div>
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="Type a message..." onkeydown="handleKey(event)">
+        <button id="send-btn" onclick="sendMessage()">&#x27A4;</button>
+    </div>
 </div>
 
 <script>
-// Sample Q&A offline
-const sampleData={
-"विज्ञान":[
-{q:"कोशिका क्या है?",a:"जीवन की सबसे छोटी इकाई।"},
-{q:"गुरुत्वाकर्षण क्या है?",a:"दो पिंडों के बीच आकर्षण बल।"}
-],
-"गणित":[
-{q:"पाई का मान?",a:"22/7 या 3.14"},
-{q:"वर्ग क्या है?",a:"समान भुजाओं वाला चतुर्भुज"}
-],
-"हिंदी":[
-{q:"संज्ञा क्या है?",a:"नाम को संज्ञा कहते हैं"},
-{q:"क्रिया क्या है?",a:"कार्य बताने वाले शब्द"}
-],
-"अंग्रेज़ी":[
-{q:"What is noun?",a:"Name of person/place/thing"},
-{q:"What is verb?",a:"Action word"}
-],
-"सामाजिक विज्ञान":[
-{q:"लोकतंत्र क्या है?",a:"जनता द्वारा शासन"},
-{q:"संविधान क्या है?",a:"देश का सर्वोच्च कानून"}
-]
-};
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
 
-// Topics buttons
-const subjects=Object.keys(sampleData);
-const topicsBar=document.getElementById('topicsBar');
-subjects.forEach(sub=>{
-  let btn=document.createElement('div');
-  btn.className='topic-chip';
-  btn.innerText=sub;
-  btn.onclick=()=>showSampleQ(sub);
-  topicsBar.appendChild(btn);
-});
-let letterBtn=document.createElement('div');
-letterBtn.className='topic-chip';
-letterBtn.innerText='✉️ पत्र';
-letterBtn.onclick=showLetter;
-topicsBar.appendChild(letterBtn);
+    function sendMessage() {
+        const messageText = userInput.value.trim();
+        if (messageText === '') return;
 
-// Show sample Q&A
-function showSampleQ(sub){
-  let html=`<h3>${sub} - Sample Questions</h3>`;
-  sampleData[sub].forEach((item,i)=>{
-    html+=`<div class="qa-item"><div class="qa-q">${i+1}. ${item.q}</div><div class="qa-a">उत्तर: ${item.a}</div></div>`;
-  });
-  document.getElementById("chat").innerHTML=html;
-  scrollChat();
-}
+        // Display user message
+        appendMessage(messageText, 'user-message');
+        userInput.value = '';
 
-// Letters
-function showLetter(){
-  let txt=`<b>पिता जी को पत्र:</b><br><br>आदरणीय पिताजी,<br>सादर प्रणाम। मैं यहाँ कुशल हूँ। आशा है आप भी स्वस्थ होंगे।<br>मुझे 2 दिन की छुट्टी चाहिए क्योंकि मैं बीमार हूँ।<br><br>आपका पुत्र<br>नाम<br><br>
-<b>माता जी को पत्र:</b><br><br>प्रिय माताजी,<br>सादर प्रणाम। मैं ठीक हूँ। आप कैसी हैं?<br>मैं जल्द घर आऊंगा।<br><br>आपका बेटा`;
-  document.getElementById("chat").innerHTML=txt;
-  scrollChat();
-}
-
-// Chat
-function sendMessage(){
-  let input=document.getElementById('input');
-  let msg=input.value.trim();
-  if(msg==="") return;
-  addMessage(msg,'user');
-  input.value='';
-  generateIllusionAnswer(msg);
-}
-
-function addMessage(text,sender){
-  let div=document.createElement('div');
-  div.className='message';
-  if(sender==='user') div.classList.add('user');
-  div.innerHTML=text;
-  document.getElementById('chat').appendChild(div);
-  scrollChat();
-}
-
-function scrollChat(){
-  const chat=document.getElementById('chat');
-  chat.scrollTop=chat.scrollHeight;
-}
-
-// Illusion AI logic
-function generateIllusionAnswer(msg){
-  msg=msg.toLowerCase();
-  // Check sample Q&A
-  for(let sub in sampleData){
-    for(let item of sampleData[sub]){
-      if(msg.includes(item.q.toLowerCase().split(" ")[0])){
-        addMessage(`<b>${item.q}</b><br>उत्तर: ${item.a}`,'ai');
-        return;
-      }
+        // Get and display bot response
+        setTimeout(() => {
+            const botResponse = getBotResponse(messageText);
+            appendMessage(botResponse, 'bot-message');
+        }, 500); // Simulate thinking
     }
-  }
-  // Unknown question → generate smart-sounding generic answer
-  const genericAnswers=[
-    "यह एक महत्वपूर्ण प्रश्न है। इसका उत्तर कुछ इस प्रकार हो सकता है।",
-    "मैं इसे समझा रहा हूँ, ध्यान से देखें।",
-    "यह प्रश्न दिलचस्प है। इसका उत्तर खोजा जा रहा है।",
-    "आपके सवाल पर विचार किया गया। इसका उत्तर निम्न है।",
-    "मैंने आपके प्रश्न का विश्लेषण किया और यह उत्तर सुझाया।"
-  ];
-  let randomAnswer=genericAnswers[Math.floor(Math.random()*genericAnswers.length)];
-  addMessage(randomAnswer,'ai');
-}
+
+    function appendMessage(text, className) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', className);
+        messageElement.textContent = text;
+        chatBox.appendChild(messageElement);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function handleKey(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    // --- The "AI" Brain ---
+    // This is where you add the logic. It's a simple rule-based system.
+    function getBotResponse(input) {
+        const text = input.toLowerCase();
+
+        if (text.includes('hello') || text.includes('hi')) {
+            return 'Hello there! How can I help you today?';
+        } else if (text.includes('how are you')) {
+            return 'I am just a bunch of code, but I feel fantastic! Thanks for asking.';
+        } else if (text.includes('your name')) {
+            return 'I don\'t have a name. I\'m your offline AI assistant!';
+        } else if (text.includes('what can you do')) {
+            return 'I can have simple conversations. Try asking about my name, how I am, or tell me a joke!';
+        } else if (text.includes('joke')) {
+            return 'Why don’t scientists trust atoms? Because they make up everything!';
+        } else if (text.includes('time')) {
+            const date = new Date();
+            const hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `The current time is ${hours}:${minutes}.`;
+        } else if (text.includes('bye') || text.includes('goodbye')) {
+            return 'Goodbye! Have a great day!';
+        } else {
+            return 'I\'m not sure how to answer that. I am still learning. Try asking me to tell you a joke.';
+        }
+    }
 </script>
+
 </body>
 </html>

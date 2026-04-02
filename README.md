@@ -1,12 +1,13 @@
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offline AI Chatbot</title>
+    <title>Offline AI - Sab Sawal Ka Jawab</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -14,15 +15,28 @@
             margin: 0;
         }
         #chat-container {
-            width: 90%;
-            max-width: 400px;
-            height: 600px;
-            background-color: #fff;
+            width: 95%;
+            max-width: 600px;
+            height: 90vh;
+            background-color: #252525;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            border: 1px solid #333;
+        }
+        #header {
+            padding: 15px;
+            background-color: #333;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
+        }
+        #status {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
         }
         #chat-box {
             flex-grow: 1;
@@ -30,36 +44,40 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
         }
-        .message {
-            padding: 10px 15px;
+       .message {
+            padding: 12px 16px;
             border-radius: 18px;
-            max-width: 75%;
-            line-height: 1.4;
+            max-width: 80%;
+            line-height: 1.5;
+            white-space: pre-wrap;
         }
-        .user-message {
+       .user-message {
             background-color: #007bff;
             color: white;
             align-self: flex-end;
             border-bottom-right-radius: 4px;
         }
-        .bot-message {
-            background-color: #e9e9eb;
-            color: #333;
+       .bot-message {
+            background-color: #3a3a3a;
+            color: #e0e0e0;
             align-self: flex-start;
             border-bottom-left-radius: 4px;
         }
         #input-area {
             display: flex;
-            border-top: 1px solid #ddd;
-            padding: 10px;
+            border-top: 1px solid #444;
+            padding: 12px;
+            background-color: #333;
         }
         #user-input {
             flex-grow: 1;
-            border: 1px solid #ccc;
+            border: 1px solid #555;
+            background-color: #2a2a2a;
+            color: white;
             border-radius: 20px;
-            padding: 10px 15px;
+            padding: 12px 18px;
             font-size: 16px;
             outline: none;
         }
@@ -71,8 +89,8 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 44px;
-            height: 44px;
+            width: 48px;
+            height: 48px;
             margin-left: 10px;
             font-size: 20px;
             cursor: pointer;
@@ -80,80 +98,116 @@
             align-items: center;
             justify-content: center;
         }
+        #send-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
     </style>
+    <!-- WebLLM library - ye browser me AI chalata hai -->
+    <script type="module">
+        import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const status = document.getElementById('status');
+
+        let engine;
+        let messages = [
+            { role: "system", content: "Tum ek helpful AI assistant ho. Hindi aur English dono me jawab do." }
+        ];
+
+        // Model load karo (pehli baar download hoga, phir cache se chalega)
+        async function init() {
+            status.textContent = "AI model load ho raha hai... (pehli baar 1-2 min lagega)";
+            sendBtn.disabled = true;
+            userInput.disabled = true;
+
+            try {
+                engine = await webllm.CreateMLCEngine(
+                    "Phi-3-mini-4k-instruct-q4f16_1-MLC", // chhota, fast model ~500MB
+                    {
+                        initProgressCallback: (report) => {
+                            status.textContent = report.text;
+                        }
+                    }
+                );
+                status.textContent = "Ready! Kuch bhi pucho";
+                sendBtn.disabled = false;
+                userInput.disabled = false;
+                appendMessage("Namaste! Main taiyar hu. Ab aap koi bhi sawaal puch sakte ho.", 'bot-message');
+            } catch (e) {
+                status.textContent = "Error: " + e.message;
+                appendMessage("Model load nahi ho paya. Internet check karo aur page reload karo.", 'bot-message');
+            }
+        }
+
+        async function sendMessage() {
+            const messageText = userInput.value.trim();
+            if (messageText === '' || sendBtn.disabled) return;
+
+            appendMessage(messageText, 'user-message');
+            messages.push({ role: "user", content: messageText });
+            userInput.value = '';
+            sendBtn.disabled = true;
+            status.textContent = "Soch raha hu...";
+
+            // Bot reply
+            const botMsgElement = appendMessage("", 'bot-message');
+            let reply = "";
+
+            try {
+                const chunks = await engine.chat.completions.create({
+                    messages,
+                    stream: true,
+                });
+
+                for await (const chunk of chunks) {
+                    const delta = chunk.choices[0]?.delta?.content || "";
+                    reply += delta;
+                    botMsgElement.textContent = reply;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+
+                messages.push({ role: "assistant", content: reply });
+                status.textContent = "Ready!";
+            } catch (e) {
+                botMsgElement.textContent = "Error: " + e.message;
+                status.textContent = "Error";
+            }
+            sendBtn.disabled = false;
+        }
+
+        function appendMessage(text, className) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', className);
+            messageElement.textContent = text;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return messageElement;
+        }
+
+        window.sendMessage = sendMessage;
+        window.handleKey = (event) => {
+            if (event.key === 'Enter') sendMessage();
+        };
+
+        init();
+    </script>
 </head>
 <body>
 
 <div id="chat-container">
-    <div id="chat-box">
-        <div class="message bot-message">Hi there! I'm a simple AI. Ask me something!</div>
+    <div id="header">
+        Offline AI Chatbot
+        <div id="status">Loading...</div>
     </div>
+    <div id="chat-box"></div>
     <div id="input-area">
-        <input type="text" id="user-input" placeholder="Type a message..." onkeydown="handleKey(event)">
-        <button id="send-btn" onclick="sendMessage()">&#x27A4;</button>
+        <input type="text" id="user-input" placeholder="Koi bhi sawaal pucho..." onkeydown="handleKey(event)" disabled>
+        <button id="send-btn" onclick="sendMessage()" disabled>&#x27A4;</button>
     </div>
 </div>
-
-<script>
-    const chatBox = document.getElementById('chat-box');
-    const userInput = document.getElementById('user-input');
-
-    function sendMessage() {
-        const messageText = userInput.value.trim();
-        if (messageText === '') return;
-
-        // Display user message
-        appendMessage(messageText, 'user-message');
-        userInput.value = '';
-
-        // Get and display bot response
-        setTimeout(() => {
-            const botResponse = getBotResponse(messageText);
-            appendMessage(botResponse, 'bot-message');
-        }, 500); // Simulate thinking
-    }
-
-    function appendMessage(text, className) {
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('message', className);
-        messageElement.textContent = text;
-        chatBox.appendChild(messageElement);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    function handleKey(event) {
-        if (event.key === 'Enter') {
-            sendMessage();
-        }
-    }
-
-    // --- The "AI" Brain ---
-    // This is where you add the logic. It's a simple rule-based system.
-    function getBotResponse(input) {
-        const text = input.toLowerCase();
-
-        if (text.includes('hello') || text.includes('hi')) {
-            return 'Hello there! How can I help you today?';
-        } else if (text.includes('how are you')) {
-            return 'I am just a bunch of code, but I feel fantastic! Thanks for asking.';
-        } else if (text.includes('your name')) {
-            return 'I don\'t have a name. I\'m your offline AI assistant!';
-        } else if (text.includes('what can you do')) {
-            return 'I can have simple conversations. Try asking about my name, how I am, or tell me a joke!';
-        } else if (text.includes('joke')) {
-            return 'Why don’t scientists trust atoms? Because they make up everything!';
-        } else if (text.includes('time')) {
-            const date = new Date();
-            const hours = date.getHours();
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            return `The current time is ${hours}:${minutes}.`;
-        } else if (text.includes('bye') || text.includes('goodbye')) {
-            return 'Goodbye! Have a great day!';
-        } else {
-            return 'I\'m not sure how to answer that. I am still learning. Try asking me to tell you a joke.';
-        }
-    }
-</script>
 
 </body>
 </html>

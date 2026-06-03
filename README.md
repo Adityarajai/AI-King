@@ -28,6 +28,16 @@
             height: auto;
             border-radius: 12px;
             box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Fallback text styling if the image fails to load */
+        .logo-fallback {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffb703;
+            text-shadow: 0 0 10px rgba(255, 183, 3, 0.5);
         }
 
         .container {
@@ -68,7 +78,8 @@
             cursor: not-allowed;
         }
 
-        input[type="number"] {
+        /* Updated input style for standard text keyboard */
+        input[type="text"] {
             width: calc(100% - 24px);
             padding: 10px;
             margin-top: 10px;
@@ -94,14 +105,15 @@
             padding: 10px;
             border-radius: 6px;
             background: rgba(0, 245, 212, 0.1);
-            display: none; /* Hidden until prediction is made */
+            display: none;
         }
     </style>
 </head>
 <body>
 
 <div class="brand-container">
-    <img src="image.png" alt="AI King Logo" class="logo">
+    <img src="image.png" alt="👑 AI KING" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+    <div class="logo-fallback" style="display: none;">👑 AI KING</div>
 </div>
 
 <div class="container">
@@ -113,7 +125,7 @@
     <hr style="margin: 25px 0; border: 0; border-top: 1px solid #3a506b;">
     
     <p>Predict Outputs ($y = 2x - 1$):</p>
-    <input type="number" id="input-x" value="10" disabled>
+    <input type="text" id="input-x" value="10" disabled>
     <button id="predict-btn" onclick="predict()" disabled>Run Prediction</button>
 
     <div id="output"></div>
@@ -149,8 +161,17 @@
     }
 
     function predict() {
-        const xValue = parseFloat(document.getElementById('input-x').value);
+        const inputField = document.getElementById('input-x');
+        const xValue = parseFloat(inputField.value);
         const outputDiv = document.getElementById('output');
+        
+        // Validation check since users can now type letters
+        if (isNaN(xValue)) {
+            outputDiv.style.display = "block";
+            outputDiv.style.color = "#ffb703";
+            outputDiv.innerText = "Please enter a valid number!";
+            return;
+        }
         
         tf.tidy(() => {
             const inputTensor = tf.tensor2d([xValue], [1, 1]);
@@ -158,6 +179,7 @@
             const result = outputTensor.dataSync()[0];
             
             outputDiv.style.display = "block";
+            outputDiv.style.color = "#00f5d4";
             outputDiv.innerText = `Result: X = ${xValue} → Y ≈ ${result.toFixed(2)}`;
         });
     }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI King - The Global Omniscient Engine</title>
+    <title>AI King - Grand Chat Court</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,49 +14,99 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            height: 100vh;
         }
 
         .brand-container {
             text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .logo {
-            max-width: 150px;
-            height: auto;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
-            display: block;
-            margin: 0 auto;
+            padding: 10px;
+            margin-top: 5px;
         }
 
         .logo-fallback {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             color: #ffb703;
             text-shadow: 0 0 10px rgba(255, 183, 3, 0.5);
         }
 
-        .container {
-            max-width: 550px;
-            width: 90%;
+        /* Chat Window Container */
+        .chat-container {
+            width: 95%;
+            max-width: 600px;
+            height: 75vh;
             background: #1c2541; 
-            padding: 30px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 15px;
         }
 
-        h2 {
-            margin-top: 0;
-            color: #48cae4;
+        /* Chat Messages Area */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Message Bubbles */
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            line-height: 1.5;
+            font-size: 16px;
+        }
+
+        .user-message {
+            background-color: #00b4d8;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .king-message {
+            background-color: #3a506b;
+            color: #ffb703;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            border: 1px solid rgba(255, 183, 3, 0.2);
+        }
+
+        .system-message {
+            background: transparent;
+            color: #5c677d;
+            align-self: center;
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        /* Input Area at Bottom */
+        .chat-input-area {
+            display: flex;
+            padding: 15px;
+            background: #0b132b;
+            gap: 10px;
+            border-top: 1px solid #5c677d;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #5c677d;
+            background-color: #1c2541;
+            color: white;
+            font-size: 16px;
         }
 
         button {
-            width: 100%;
-            padding: 12px;
+            padding: 12px 24px;
             background: linear-gradient(135deg, #00b4d8, #0077b6);
             color: white;
             border: none;
@@ -65,7 +115,6 @@
             font-weight: bold;
             cursor: pointer;
             transition: opacity 0.2s;
-            margin-top: 10px;
         }
 
         button:hover {
@@ -76,89 +125,93 @@
             background: #5c677d;
             cursor: not-allowed;
         }
-
-        input[type="text"] {
-            width: calc(100% - 24px);
-            padding: 12px;
-            margin-top: 10px;
-            border-radius: 6px;
-            border: 1px solid #5c677d;
-            background-color: #0b132b;
-            color: white;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        #output {
-            margin-top: 25px;
-            font-size: 16px;
-            color: #ffb703;
-            padding: 15px;
-            border-radius: 6px;
-            background: rgba(255, 183, 3, 0.05);
-            border: 1px solid rgba(255, 183, 3, 0.2);
-            display: none;
-            text-align: left;
-            line-height: 1.5;
-            max-height: 250px;
-            overflow-y: auto;
-        }
     </style>
 </head>
 <body>
 
 <div class="brand-container">
-    <img src="image.png" alt="👑 AI KING" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-    <div class="logo-fallback" style="display: none;">👑 AI KING</div>
+    <div class="logo-fallback">👑 AI KING COURT</div>
 </div>
 
-<div class="container">
-    <h2>AI King Grand Court</h2>
-    <p>Ask the King any question in the universe:</p>
+<div class="chat-container">
+    <div class="chat-messages" id="chat-box">
+        <div class="message king-message">👑 <strong>AI King:</strong> Welcome to my Grand Court. Speak, traveler, and I shall decree.</div>
+    </div>
     
-    <input type="text" id="user-question" placeholder="Ask me anything..." value="What is the capital of France?">
-    <button id="send-btn" onclick="askTheKing()">Consult the King</button>
-
-    <div id="output"></div>
+    <div class="chat-input-area">
+        <input type="text" id="user-input" placeholder="Type your question to the King..." onkeypress="handleKeyPress(event)">
+        <button id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
 </div>
 
 <script>
-    async function askTheKing() {
-        const inputField = document.getElementById('user-question');
-        const sendBtn = document.getElementById('send-btn');
-        const outputDiv = document.getElementById('output');
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Enter key dabane par bhi send ho jaye
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // 1. User ka message chat mein dikhayein
+        appendMessage(text, 'user-message');
+        userInput.value = ''; // Input clear karein
+
+        // 2. Loading state ("The King is thinking...")
+        const loadingId = appendMessage('The King is preparing his decree...', 'system-message');
         
-        const question = inputField.value.trim();
-        if (!question) return;
-
-        // UI updates during loading state
         sendBtn.disabled = true;
-        sendBtn.innerText = "The King is thinking...";
-        outputDiv.style.display = "block";
-        outputDiv.innerHTML = "<em>The King is preparing his decree...</em>";
 
-        // Connected securely to your live Vercel backend
-        const backendUrl = "https://ai-king-red.vercel.app/api/ask"; 
+        // Aapka naya Vercel backend URL
+        const backendUrl = "https://ai-king-amber.vercel.app/api/ask"; 
 
         try {
             const response = await fetch(backendUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ question: question })
+                body: JSON.stringify({ question: text })
             });
 
             const data = await response.json();
+            
+            // Loading text ko hataayein
+            document.getElementById(loadingId).remove();
+
             let kingReply = data.reply || "The royal chamber is silent right now.";
             
-            outputDiv.innerHTML = `👑 <strong>AI King:</strong> ${kingReply}`;
+            // 3. King ka answer bubble chat mein jodein
+            appendMessage(`👑 <strong>AI King:</strong> ${kingReply}`, 'king-message');
 
         } catch (error) {
             console.error(error);
-            outputDiv.innerHTML = "<span style='color: #ff4d4d;'>Error: Unable to connect securely to the backend chamber.</span>";
+            document.getElementById(loadingId).remove();
+            appendMessage('Error: Connection to the palace failed.', 'system-message');
         } finally {
             sendBtn.disabled = false;
-            sendBtn.innerText = "Consult the King";
+            userInput.focus();
         }
+    }
+
+    // Naya message bubble jodne ka function
+    function appendMessage(text, className) {
+        const messageDiv = document.createElement('div');
+        const uniqueId = 'msg-' + Date.now();
+        messageDiv.id = uniqueId;
+        messageDiv.className = `message ${className}`;
+        messageDiv.innerHTML = text;
+        chatBox.appendChild(messageDiv);
+        
+        // Chat scroll automatically niche le jane ke liye
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        return uniqueId;
     }
 </script>
 

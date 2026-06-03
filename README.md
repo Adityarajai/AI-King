@@ -1,9 +1,12 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI King - The Global Omniscient Engine</title>
+    <script type="module">
+        import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0';
+        window.pipeline = pipeline;
+    </script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -89,6 +92,15 @@
             text-align: center;
         }
 
+        #status-box {
+            font-size: 14px;
+            color: #00f5d4;
+            margin-bottom: 15px;
+            background: rgba(0, 245, 212, 0.05);
+            padding: 8px;
+            border-radius: 4px;
+        }
+
         #output {
             margin-top: 25px;
             font-size: 16px;
@@ -114,16 +126,42 @@
 
 <div class="container">
     <h2>AI King Grand Court</h2>
-    <p>Ask the King any question in the universe:</p>
+    <div id="status-box">Status: Preparing Royal Court...</div>
     
+    <p>Ask the King any question in the universe:</p>
     <input type="text" id="user-question" placeholder="Ask me anything..." value="What is the capital of France?">
-    <button id="send-btn" onclick="askTheKing()">Consult the King</button>
+    <button id="send-btn" onclick="askTheKing()" disabled>Load AI Engine</button>
 
     <div id="output"></div>
 </div>
 
 <script>
+    let generator = null;
+
+    // Automatically load the light AI model inside the browser engine
+    window.addEventListener('DOMContentLoaded', async () => {
+        const statusBox = document.getElementById('status-box');
+        const sendBtn = document.getElementById('send-btn');
+        
+        try {
+            statusBox.innerText = "Status: Summoning AI King (Downloading engine)...";
+            // Using a tiny text-generation model optimized for browsers
+            generator = await window.pipeline('text2text-generation', 'Xenova/LaMini-Flan-T5-78M');
+            
+            statusBox.innerText = "Status: AI King is on the Throne!";
+            statusBox.style.color = "#00f5d4";
+            sendBtn.innerText = "Consult the King";
+            sendBtn.disabled = false;
+        } catch (e) {
+            console.error(e);
+            statusBox.innerText = "Status: Failed to build local engine.";
+            statusBox.style.color = "#ff4d4d";
+        }
+    });
+
     async function askTheKing() {
+        if(!generator) return;
+
         const inputField = document.getElementById('user-question');
         const sendBtn = document.getElementById('send-btn');
         const outputDiv = document.getElementById('output');
@@ -131,44 +169,27 @@
         const question = inputField.value.trim();
         if (!question) return;
 
-        // UI Updates for loading state
         sendBtn.disabled = true;
         sendBtn.innerText = "The King is thinking...";
         outputDiv.style.display = "block";
         outputDiv.innerHTML = "<em>The King is preparing his decree...</em>";
 
-        // Using a free, keyless public proxy API endpoint
-        const apiUrl = "https://nexra.aryahcr.cc/api/chat/gpt"; 
+        // Instruct the local engine to speak like royalty
+        const prompt = `You are a majestic king. Answer this question regally: ${question}`;
 
         try {
-            const response = await fetch(apiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    messages: [
-                        { 
-                            role: "system", 
-                            content: "You are the AI King, a grand, wise, and regal monarch. Respond to the user's question majestically, keeping answers clear and under 4 sentences." 
-                        },
-                        { role: "user", content: question }
-                    ],
-                    stream: false
-                })
+            const result = await generator(prompt, { 
+                max_new_tokens: 100,
+                temperature: 0.7 
             });
-
-            const data = await response.json();
             
-            // Extract the generated text from the proxy API
-            let kingReply = data.gpt || "The King is silent. The royal court is busy, please try again in a moment.";
-            
-            // Display the result
+            let kingReply = result[0].generated_text;
             outputDiv.innerHTML = `👑 <strong>AI King:</strong> ${kingReply.trim()}`;
 
         } catch (error) {
             console.error(error);
-            outputDiv.innerHTML = "<span style='color: #ff4d4d;'>Error: Failed to reach the royal chamber. Check your internet connection!</span>";
+            outputDiv.innerHTML = "<span style='color: #ff4d4d;'>Error: Core processing failure in the royal chambers.</span>";
         } finally {
-            // Restore button
             sendBtn.disabled = false;
             sendBtn.innerText = "Consult the King";
         }

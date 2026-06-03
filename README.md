@@ -1,15 +1,15 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI King - Home</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <title>AI King - The Global Omniscient Engine</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #0b132b; /* Dark blue matching the logo background */
+            background-color: #0b132b; 
             color: #ffffff;
             display: flex;
             flex-direction: column;
@@ -20,11 +20,11 @@
 
         .brand-container {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .logo {
-            max-width: 180px;
+            max-width: 150px;
             height: auto;
             border-radius: 12px;
             box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
@@ -32,7 +32,6 @@
             margin: 0 auto;
         }
 
-        /* Fallback text styling if the image fails to load */
         .logo-fallback {
             font-size: 28px;
             font-weight: bold;
@@ -41,9 +40,9 @@
         }
 
         .container {
-            max-width: 450px;
+            max-width: 550px;
             width: 90%;
-            background: #1c2541; /* Slightly lighter contrast background */
+            background: #1c2541; 
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
@@ -78,10 +77,9 @@
             cursor: not-allowed;
         }
 
-        /* Updated input style for standard text keyboard */
         input[type="text"] {
             width: calc(100% - 24px);
-            padding: 10px;
+            padding: 12px;
             margin-top: 10px;
             border-radius: 6px;
             border: 1px solid #5c677d;
@@ -91,21 +89,19 @@
             text-align: center;
         }
 
-        #training-status {
-            margin-top: 12px;
-            font-size: 14px;
-            color: #a3b18a;
-        }
-
         #output {
             margin-top: 25px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #00f5d4;
-            padding: 10px;
+            font-size: 16px;
+            color: #ffb703;
+            padding: 15px;
             border-radius: 6px;
-            background: rgba(0, 245, 212, 0.1);
+            background: rgba(255, 183, 3, 0.05);
+            border: 1px solid rgba(255, 183, 3, 0.2);
             display: none;
+            text-align: left;
+            line-height: 1.5;
+            max-height: 250px;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -117,71 +113,65 @@
 </div>
 
 <div class="container">
-    <h2>AI King Engine</h2>
-    <p>Train the core intelligence model:</p>
-    <button id="train-btn" onclick="trainModel()">Initialize Model</button>
-    <div id="training-status">Status: Awaiting Initialization</div>
+    <h2>AI King Grand Court</h2>
+    <p>Ask the King any question in the universe:</p>
     
-    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #3a506b;">
-    
-    <p>Predict Outputs ($y = 2x - 1$):</p>
-    <input type="text" id="input-x" value="10" disabled>
-    <button id="predict-btn" onclick="predict()" disabled>Run Prediction</button>
+    <input type="text" id="user-question" placeholder="Ask me anything..." value="What is the capital of France?">
+    <button id="send-btn" onclick="askTheKing()">Consult the King</button>
 
     <div id="output"></div>
 </div>
 
 <script>
-    let model;
-
-    async function trainModel() {
-        const trainBtn = document.getElementById('train-btn');
-        const statusDiv = document.getElementById('training-status');
-        
-        trainBtn.disabled = true;
-        statusDiv.style.color = "#ffb703";
-        statusDiv.innerText = "Model optimization in progress...";
-
-        model = tf.sequential();
-        model.add(tf.layers.dense({units: 1, inputShape: [1]}));
-        model.compile({loss: 'meanSquaredError', optimizer: 'sgd'});
-
-        const xs = tf.tensor2d([-1, 0, 1, 2, 3, 4], [6, 1]);
-        const ys = tf.tensor2d([-3, -1, 1, 3, 5, 7], [6, 1]);
-
-        await model.fit(xs, ys, {epochs: 250});
-
-        xs.dispose();
-        ys.dispose();
-        
-        statusDiv.style.color = "#00f5d4";
-        statusDiv.innerText = "System Ready.";
-        document.getElementById('input-x').disabled = false;
-        document.getElementById('predict-btn').disabled = false;
-    }
-
-    function predict() {
-        const inputField = document.getElementById('input-x');
-        const xValue = parseFloat(inputField.value);
+    async function askTheKing() {
+        const inputField = document.getElementById('user-question');
+        const sendBtn = document.getElementById('send-btn');
         const outputDiv = document.getElementById('output');
         
-        // Validation check since users can now type letters
-        if (isNaN(xValue)) {
-            outputDiv.style.display = "block";
-            outputDiv.style.color = "#ffb703";
-            outputDiv.innerText = "Please enter a valid number!";
-            return;
-        }
-        
-        tf.tidy(() => {
-            const inputTensor = tf.tensor2d([xValue], [1, 1]);
-            const outputTensor = model.predict(inputTensor);
-            const result = outputTensor.dataSync()[0];
+        const question = inputField.value.trim();
+        if (!question) return;
+
+        // UI Updates for loading state
+        sendBtn.disabled = true;
+        sendBtn.innerText = "The King is thinking...";
+        outputDiv.style.display = "block";
+        outputDiv.innerHTML = "<em>The King is preparing his decree...</em>";
+
+        // Using a free, keyless public proxy API endpoint
+        const apiUrl = "https://nexra.aryahcr.cc/api/chat/gpt"; 
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    messages: [
+                        { 
+                            role: "system", 
+                            content: "You are the AI King, a grand, wise, and regal monarch. Respond to the user's question majestically, keeping answers clear and under 4 sentences." 
+                        },
+                        { role: "user", content: question }
+                    ],
+                    stream: false
+                })
+            });
+
+            const data = await response.json();
             
-            outputDiv.style.display = "block";
-            outputDiv.style.color = "#00f5d4";
-            outputDiv.innerText = `Result: X = ${xValue} → Y ≈ ${result.toFixed(2)}`;
-        });
+            // Extract the generated text from the proxy API
+            let kingReply = data.gpt || "The King is silent. The royal court is busy, please try again in a moment.";
+            
+            // Display the result
+            outputDiv.innerHTML = `👑 <strong>AI King:</strong> ${kingReply.trim()}`;
+
+        } catch (error) {
+            console.error(error);
+            outputDiv.innerHTML = "<span style='color: #ff4d4d;'>Error: Failed to reach the royal chamber. Check your internet connection!</span>";
+        } finally {
+            // Restore button
+            sendBtn.disabled = false;
+            sendBtn.innerText = "Consult the King";
+        }
     }
 </script>
 

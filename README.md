@@ -1,213 +1,167 @@
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offline AI - Sab Sawal Ka Jawab</title>
+    <title>AI King - Home</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-        }
-        #chat-container {
-            width: 95%;
-            max-width: 600px;
-            height: 90vh;
-            background-color: #252525;
-            border-radius: 12px;
-            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            padding: 0;
+            background-color: #0b132b; /* Dark blue matching the logo background */
+            color: #ffffff;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            border: 1px solid #333;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
-        #header {
-            padding: 15px;
-            background-color: #333;
+
+        .brand-container {
             text-align: center;
-            font-weight: bold;
-            border-bottom: 1px solid #444;
+            margin-bottom: 30px;
         }
-        #status {
-            font-size: 12px;
-            color: #aaa;
-            margin-top: 4px;
+
+        .logo {
+            max-width: 180px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
         }
-        #chat-box {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+
+        .container {
+            max-width: 450px;
+            width: 90%;
+            background: #1c2541; /* Slightly lighter contrast background */
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            text-align: center;
         }
-       .message {
-            padding: 12px 16px;
-            border-radius: 18px;
-            max-width: 80%;
-            line-height: 1.5;
-            white-space: pre-wrap;
+
+        h2 {
+            margin-top: 0;
+            color: #48cae4;
         }
-       .user-message {
-            background-color: #007bff;
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-       .bot-message {
-            background-color: #3a3a3a;
-            color: #e0e0e0;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-        #input-area {
-            display: flex;
-            border-top: 1px solid #444;
+
+        button {
+            width: 100%;
             padding: 12px;
-            background-color: #333;
-        }
-        #user-input {
-            flex-grow: 1;
-            border: 1px solid #555;
-            background-color: #2a2a2a;
-            color: white;
-            border-radius: 20px;
-            padding: 12px 18px;
-            font-size: 16px;
-            outline: none;
-        }
-        #user-input:focus {
-            border-color: #007bff;
-        }
-        #send-btn {
-            background-color: #007bff;
+            background: linear-gradient(135deg, #00b4d8, #0077b6);
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            margin-left: 10px;
-            font-size: 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transition: opacity 0.2s;
+            margin-top: 10px;
         }
-        #send-btn:disabled {
-            background-color: #555;
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            background: #5c677d;
             cursor: not-allowed;
         }
+
+        input[type="number"] {
+            width: calc(100% - 24px);
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: 1px solid #5c677d;
+            background-color: #0b132b;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        #training-status {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #a3b18a;
+        }
+
+        #output {
+            margin-top: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #00f5d4;
+            padding: 10px;
+            border-radius: 6px;
+            background: rgba(0, 245, 212, 0.1);
+            display: none; /* Hidden until prediction is made */
+        }
     </style>
-    <!-- WebLLM library - ye browser me AI chalata hai -->
-    <script type="module">
-        import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-
-        const chatBox = document.getElementById('chat-box');
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        const status = document.getElementById('status');
-
-        let engine;
-        let messages = [
-            { role: "system", content: "Tum ek helpful AI assistant ho. Hindi aur English dono me jawab do." }
-        ];
-
-        // Model load karo (pehli baar download hoga, phir cache se chalega)
-        async function init() {
-            status.textContent = "AI model load ho raha hai... (pehli baar 1-2 min lagega)";
-            sendBtn.disabled = true;
-            userInput.disabled = true;
-
-            try {
-                engine = await webllm.CreateMLCEngine(
-                    "Phi-3-mini-4k-instruct-q4f16_1-MLC", // chhota, fast model ~500MB
-                    {
-                        initProgressCallback: (report) => {
-                            status.textContent = report.text;
-                        }
-                    }
-                );
-                status.textContent = "Ready! Kuch bhi pucho";
-                sendBtn.disabled = false;
-                userInput.disabled = false;
-                appendMessage("Namaste! Main taiyar hu. Ab aap koi bhi sawaal puch sakte ho.", 'bot-message');
-            } catch (e) {
-                status.textContent = "Error: " + e.message;
-                appendMessage("Model load nahi ho paya. Internet check karo aur page reload karo.", 'bot-message');
-            }
-        }
-
-        async function sendMessage() {
-            const messageText = userInput.value.trim();
-            if (messageText === '' || sendBtn.disabled) return;
-
-            appendMessage(messageText, 'user-message');
-            messages.push({ role: "user", content: messageText });
-            userInput.value = '';
-            sendBtn.disabled = true;
-            status.textContent = "Soch raha hu...";
-
-            // Bot reply
-            const botMsgElement = appendMessage("", 'bot-message');
-            let reply = "";
-
-            try {
-                const chunks = await engine.chat.completions.create({
-                    messages,
-                    stream: true,
-                });
-
-                for await (const chunk of chunks) {
-                    const delta = chunk.choices[0]?.delta?.content || "";
-                    reply += delta;
-                    botMsgElement.textContent = reply;
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                }
-
-                messages.push({ role: "assistant", content: reply });
-                status.textContent = "Ready!";
-            } catch (e) {
-                botMsgElement.textContent = "Error: " + e.message;
-                status.textContent = "Error";
-            }
-            sendBtn.disabled = false;
-        }
-
-        function appendMessage(text, className) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', className);
-            messageElement.textContent = text;
-            chatBox.appendChild(messageElement);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return messageElement;
-        }
-
-        window.sendMessage = sendMessage;
-        window.handleKey = (event) => {
-            if (event.key === 'Enter') sendMessage();
-        };
-
-        init();
-    </script>
 </head>
 <body>
 
-<div id="chat-container">
-    <div id="header">
-        Offline AI Chatbot
-        <div id="status">Loading...</div>
-    </div>
-    <div id="chat-box"></div>
-    <div id="input-area">
-        <input type="text" id="user-input" placeholder="Koi bhi sawaal pucho..." onkeydown="handleKey(event)" disabled>
-        <button id="send-btn" onclick="sendMessage()" disabled>&#x27A4;</button>
-    </div>
+<div class="brand-container">
+    <img src="image.png" alt="AI King Logo" class="logo">
 </div>
+
+<div class="container">
+    <h2>AI King Engine</h2>
+    <p>Train the core intelligence model:</p>
+    <button id="train-btn" onclick="trainModel()">Initialize Model</button>
+    <div id="training-status">Status: Awaiting Initialization</div>
+    
+    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #3a506b;">
+    
+    <p>Predict Outputs ($y = 2x - 1$):</p>
+    <input type="number" id="input-x" value="10" disabled>
+    <button id="predict-btn" onclick="predict()" disabled>Run Prediction</button>
+
+    <div id="output"></div>
+</div>
+
+<script>
+    let model;
+
+    async function trainModel() {
+        const trainBtn = document.getElementById('train-btn');
+        const statusDiv = document.getElementById('training-status');
+        
+        trainBtn.disabled = true;
+        statusDiv.style.color = "#ffb703";
+        statusDiv.innerText = "Model optimization in progress...";
+
+        model = tf.sequential();
+        model.add(tf.layers.dense({units: 1, inputShape: [1]}));
+        model.compile({loss: 'meanSquaredError', optimizer: 'sgd'});
+
+        const xs = tf.tensor2d([-1, 0, 1, 2, 3, 4], [6, 1]);
+        const ys = tf.tensor2d([-3, -1, 1, 3, 5, 7], [6, 1]);
+
+        await model.fit(xs, ys, {epochs: 250});
+
+        xs.dispose();
+        ys.dispose();
+        
+        statusDiv.style.color = "#00f5d4";
+        statusDiv.innerText = "System Ready.";
+        document.getElementById('input-x').disabled = false;
+        document.getElementById('predict-btn').disabled = false;
+    }
+
+    function predict() {
+        const xValue = parseFloat(document.getElementById('input-x').value);
+        const outputDiv = document.getElementById('output');
+        
+        tf.tidy(() => {
+            const inputTensor = tf.tensor2d([xValue], [1, 1]);
+            const outputTensor = model.predict(inputTensor);
+            const result = outputTensor.dataSync()[0];
+            
+            outputDiv.style.display = "block";
+            outputDiv.innerText = `Result: X = ${xValue} → Y ≈ ${result.toFixed(2)}`;
+        });
+    }
+</script>
 
 </body>
 </html>

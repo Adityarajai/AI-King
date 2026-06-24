@@ -3,105 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI King</title>
+    <title>AI King - Professional Dashboard</title>
     <style>
         * { 
             box-sizing: border-box; 
             margin: 0; 
             padding: 0; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
         }
+        
         body { 
-            background-color: #1a1a1a; 
-            color: #fff; 
+            background: linear-gradient(135deg, #111111 0%, #1a1a1f 100%);
+            color: #f5f5f7; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            height: 100vh; 
+            height: 100vh;
+            overflow: hidden;
         }
+
         .chat-container { 
             width: 100%; 
-            max-width: 450px; 
-            height: 85vh; 
-            background: #2d2d2d; 
-            border-radius: 15px; 
+            max-width: 480px; 
+            height: 90vh; 
+            background: rgba(30, 30, 35, 0.95); 
+            border-radius: 24px; 
             display: flex; 
             flex-direction: column; 
             overflow: hidden; 
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3); 
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.05); 
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            backdrop-filter: blur(10px);
         }
+
         .header { 
-            background: #ffd700; 
-            color: #1a1a1a; 
-            padding: 15px; 
+            background: linear-gradient(90deg, #1e1e24 0%, #2b2b36 100%);
+            color: #ffd700; 
+            padding: 16px 20px; 
             text-align: center; 
-            font-weight: bold; 
-            font-size: 1.4rem; 
-            letter-spacing: 1px; 
+            font-weight: 700; 
+            font-size: 1.5rem; 
+            letter-spacing: 1.5px; 
+            border-bottom: 2px solid #ffd700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
+
+        .header img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid #ffd700;
+            object-fit: cover;
+        }
+
         .chat-box { 
             flex: 1; 
-            padding: 15px; 
+            padding: 20px; 
             overflow-y: auto; 
             display: flex; 
             flex-direction: column; 
-            gap: 10px; 
+            gap: 16px; 
+            background: radial-gradient(circle at top, rgba(40,40,50,0.3) 0%, rgba(20,20,25,0) 80%);
+            scroll-behavior: smooth;
         }
+
+        /* Custom Scrollbar */
+        .chat-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 10px;
+        }
+        .chat-box::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 215, 0, 0.4);
+        }
+
+        .message-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            max-width: 85%;
+        }
+
+        .message-wrapper.user-wrapper {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-wrapper.bot-wrapper {
+            align-self: flex-start;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+
         .message { 
-            padding: 10px 14px; 
-            border-radius: 10px; 
-            max-width: 80%; 
+            padding: 12px 16px; 
+            border-radius: 16px; 
             word-wrap: break-word; 
-            line-height: 1.4; 
+            line-height: 1.5; 
+            font-size: 0.95rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            animation: fadeIn 0.3s ease-out;
         }
+
         .user { 
-            background: #ffd700; 
-            color: #1a1a1a; 
-            align-self: flex-end; 
+            background: linear-gradient(135deg, #ffd700 0%, #cca100 100%);
+            color: #0b0b0d; 
+            border-top-right-radius: 4px;
+            font-weight: 500;
         }
+
         .bot { 
-            background: #404040; 
-            color: #fff; 
-            align-self: flex-start; 
+            background: #2a2a35; 
+            color: #f5f5f7; 
+            border-top-left-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
+
+        .thinking-msg {
+            color: #ffd700;
+            font-style: italic;
+            opacity: 0.85;
+            letter-spacing: 1px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
         .input-area { 
             display: flex; 
-            padding: 10px; 
-            background: #222; 
-            gap: 10px; 
+            padding: 16px; 
+            background: #16161a; 
+            gap: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
+
         input { 
             flex: 1; 
-            padding: 12px; 
-            border: none; 
-            border-radius: 8px; 
-            background: #333; 
+            padding: 14px 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 12px; 
+            background: #22222b; 
             color: white; 
             outline: none; 
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
         }
+
+        input:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+            background: #282833;
+        }
+
         button { 
-            background: #ffd700; 
+            background: linear-gradient(135deg, #ffd700 0%, #cca100 100%);
             border: none; 
-            color: #1a1a1a; 
-            padding: 0 20px; 
-            border-radius: 8px; 
+            color: #111; 
+            padding: 0 24px; 
+            border-radius: 12px; 
             font-weight: bold; 
             cursor: pointer; 
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
         }
+
         button:hover { 
-            background: #e6c200; 
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(255, 215, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
         }
     </style>
 </head>
 <body>
 
 <div class="chat-container">
-    <div class="header">👑 AI KING 👑</div>
+    <div class="header">
+        <img src="1000218331.png" alt="👑">
+        AI King
+    </div>
     <div class="chat-box" id="chatBox">
-        <div class="message bot">Greetings! I am AI King. How may I assist your highness today?</div>
+        <div class="message-wrapper bot-wrapper">
+            <img src="1000218331.png" class="avatar" alt="👑">
+            <div class="message bot">main Aditya Raj ka AI, AI King hu mai aapki Kya madad kar sakta hu</div>
+        </div>
     </div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Ask your King something..." onkeypress="handleKeyPress(event)">
+        <input type="text" id="userInput" placeholder="Ask anything to search live..." onkeypress="handleKeyPress(event)">
         <button onclick="sendMessage()">Send</button>
     </div>
 </div>
@@ -114,48 +228,102 @@
         
         if (!userText) return;
 
-        // Append User Message
-        appendMessage(userText, 'user');
+        // 1. Render User Message wrapped in professional styling
+        appendMessageWrapper(userText, 'user');
         inputEl.value = '';
 
-        // Append Temporary Thinking Message
-        const thinkingId = appendMessage("Thinking...", 'bot');
+        // 2. Thinking Status Render ("thinking......")
+        const thinkingId = appendMessageWrapper("thinking......", 'bot', true);
 
+        // Math handling instantly
+        let mathExpression = userText.replace(/([\d.‌]+)\(/g, '$1*('); 
+        if (/^[0-9+\-*/().\s]+$/.test(mathExpression.trim())) {
+            try {
+                const result = Function(`"use strict"; return (${mathExpression})`)();
+                removeThinking(thinkingId);
+                appendMessageWrapper(`[AI King]: Calculation ka jawab hai: **${result}**`, 'bot');
+                return;
+            } catch (e) {}
+        }
+
+        // REAL-TIME MULTI-SOURCE CRAWLER 
         try {
-            // Using a reliable public instant-answer endpoint
-            const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(userText)}&format=json&origin=*`);
-            const data = await response.json();
-            
-            // Remove thinking message
-            document.getElementById(thinkingId).remove();
-            
-            // Extract answer or use fallback response
-            const reply = data.AbstractText || (data.RelatedTopics && data.RelatedTopics[0]?.Text) || "I am processing your command, your highness, but my repository lacks specific details on this exact matter.";
-            appendMessage(reply, 'bot');
-            
+            const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(userText)}&format=json&origin=*`;
+            const searchRes = await fetch(searchUrl);
+            const searchData = await searchRes.json();
+
+            if (searchData.query && searchData.query.search.length > 0) {
+                const exactTitle = searchData.query.search[0].title;
+                const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(exactTitle)}`;
+                
+                const wikiRes = await fetch(wikiUrl);
+                const wikiData = await wikiRes.json();
+                
+                removeThinking(thinkingId);
+                if (wikiData.extract) {
+                    // Tag transformed cleanly into [AI King]:
+                    appendMessageWrapper(`[AI King]: ${wikiData.extract}`, 'bot');
+                    return;
+                }
+            }
+            throw new Error("Wiki search failed");
+
         } catch (error) {
-            document.getElementById(thinkingId).remove();
-            appendMessage("Apologies, my kingdom's servers are experiencing issues.", 'bot');
-            console.error("Error fetching data:", error);
+            try {
+                const altSearchUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://api.duckduckgo.com/?q=' + encodeURIComponent(userText) + '&format=json&no_html=1')}`;
+                const response = await fetch(altSearchUrl);
+                const wrapper = await response.json();
+                const data = JSON.parse(wrapper.contents);
+                
+                removeThinking(thinkingId);
+                let webReply = data.AbstractText || (data.RelatedTopics && data.RelatedTopics[0]?.Text);
+
+                if (webReply && webReply.trim().length > 0) {
+                    appendMessageWrapper(`[AI King]: ${webReply}`, 'bot');
+                } else {
+                    appendMessageWrapper("[AI King]: Internet network busy hai. Kripya thodi der baad true search karein!", 'bot');
+                }
+            } catch (e) {
+                removeThinking(thinkingId);
+                appendMessageWrapper("[AI King]: Connection Timeout. Live data fetch nahi ho paya.", 'bot');
+            }
         }
     }
 
-    function appendMessage(text, sender) {
+    function removeThinking(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
+    function appendMessageWrapper(text, sender, isThinking = false) {
         const chatBox = document.getElementById('chatBox');
+        
+        const wrapper = document.createElement('div');
+        const id = 'msg-wrap-' + Date.now();
+        wrapper.id = id;
+        wrapper.className = `message-wrapper ${sender}-wrapper`;
+
+        // If bot, append avatar icon
+        if (sender === 'bot') {
+            const img = document.createElement('img');
+            img.src = "1000218331.png";
+            img.className = "avatar";
+            wrapper.appendChild(img);
+        }
+
         const msgDiv = document.createElement('div');
-        const id = 'msg-' + Date.now();
-        msgDiv.id = id;
-        msgDiv.className = `message ${sender}`;
+        msgDiv.className = `message ${sender} ${isThinking ? 'thinking-msg' : ''}`;
         msgDiv.innerText = text;
-        chatBox.appendChild(msgDiv);
+        
+        wrapper.appendChild(msgDiv);
+        chatBox.appendChild(wrapper);
+        
         chatBox.scrollTop = chatBox.scrollHeight;
         return id;
     }
 
     function handleKeyPress(event) {
-        if (event.key === 'Enter') {
-            sendMessage();
-        }
+        if (event.key === 'Enter') sendMessage();
     }
 </script>
 

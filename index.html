@@ -205,12 +205,12 @@
 
 <div class="chat-container">
     <div class="header">
-        <img src="1000218331.png" alt="👑">
+        <img src="image.png" alt="👑">
         AI King
     </div>
     <div class="chat-box" id="chatBox">
         <div class="message-wrapper bot-wrapper">
-            <img src="1000218331.png" class="avatar" alt="👑">
+            <img src="image.png" class="avatar" alt="👑">
             <div class="message bot">main Aditya Raj ka AI, AI King hu mai aapki Kya madad kar sakta hu</div>
         </div>
     </div>
@@ -228,11 +228,9 @@
         
         if (!userText) return;
 
-        // 1. Render User Message wrapped in professional styling
         appendMessageWrapper(userText, 'user');
         inputEl.value = '';
 
-        // 2. Thinking Status Render ("thinking......")
         const thinkingId = appendMessageWrapper("thinking......", 'bot', true);
 
         // Math handling instantly
@@ -261,7 +259,6 @@
                 
                 removeThinking(thinkingId);
                 if (wikiData.extract) {
-                    // Tag transformed cleanly into [AI King]:
                     appendMessageWrapper(`[AI King]: ${wikiData.extract}`, 'bot');
                     return;
                 }
@@ -303,10 +300,9 @@
         wrapper.id = id;
         wrapper.className = `message-wrapper ${sender}-wrapper`;
 
-        // If bot, append avatar icon
         if (sender === 'bot') {
             const img = document.createElement('img');
-            img.src = "1000218331.png";
+            img.src = "image.png";
             img.className = "avatar";
             wrapper.appendChild(img);
         }

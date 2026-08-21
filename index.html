@@ -228,7 +228,7 @@
             position: fixed;
             inset: 0;
             pointer-events: none;
-            opacity: 0.18;
+            opacity: 0.035;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
             mix-blend-mode: soft-light;
         }
@@ -372,6 +372,135 @@
             .input-area { padding: 14px; gap: 8px; }
             input { padding-inline: 14px; }
             button { min-width: 76px; padding-inline: 14px; }
+        }
+
+        /* Cyber interface layer */
+        body {
+            --cyan: #55e7ff;
+            --violet: #9d7aff;
+            background-color: #05070c;
+            background-image:
+                radial-gradient(circle at 14% 12%, rgba(85, 231, 255, 0.16), transparent 26%),
+                radial-gradient(circle at 88% 84%, rgba(157, 122, 255, 0.2), transparent 30%),
+                #05070c;
+            background-size: auto, auto, auto;
+        }
+
+        body::before { display: none; }
+
+        .chat-container {
+            isolation: isolate;
+            border-color: rgba(85, 231, 255, 0.22);
+            box-shadow:
+                0 0 0 1px rgba(157, 122, 255, 0.12),
+                0 0 45px rgba(85, 231, 255, 0.08),
+                0 30px 90px rgba(0, 0, 0, 0.62);
+        }
+
+        .chat-container::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(85, 231, 255, 0.7), transparent 28%, transparent 68%, rgba(157, 122, 255, 0.65));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            z-index: 4;
+            opacity: 0.7;
+        }
+
+        .header {
+            background:
+                linear-gradient(90deg, rgba(85, 231, 255, 0.08), transparent 38%, rgba(157, 122, 255, 0.08)),
+                rgba(15, 19, 30, 0.86);
+        }
+
+        .header::before {
+            content: "◆  AI SYSTEM";
+            position: absolute;
+            left: 28px;
+            top: 10px;
+            color: rgba(85, 231, 255, 0.62);
+            font-size: 0.48rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .header::after {
+            content: "●  ONLINE  /  READY TO HELP";
+            color: var(--cyan);
+            text-shadow: 0 0 10px rgba(85, 231, 255, 0.7);
+            letter-spacing: 1.1px;
+        }
+
+        .header img {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 4px rgba(85, 231, 255, 0.06), 0 0 24px rgba(85, 231, 255, 0.38);
+        }
+
+        .chat-box {
+            position: relative;
+        }
+
+        .chat-box::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.32;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0,
+                transparent 5px,
+                rgba(255, 255, 255, 0.012) 6px
+            );
+        }
+
+        .message-wrapper { position: relative; z-index: 1; }
+
+        .bot {
+            background:
+                linear-gradient(135deg, rgba(35, 44, 58, 0.94), rgba(24, 28, 42, 0.94));
+            border-left: 2px solid rgba(85, 231, 255, 0.5);
+        }
+
+        .user {
+            background: linear-gradient(135deg, #fff0b8, #e8ad3b 65%, #bc7c20);
+            border-right: 2px solid rgba(157, 122, 255, 0.72);
+        }
+
+        .input-area {
+            background:
+                linear-gradient(90deg, rgba(85, 231, 255, 0.04), transparent, rgba(157, 122, 255, 0.04)),
+                rgba(7, 10, 17, 0.88);
+        }
+
+        input {
+            border-color: rgba(85, 231, 255, 0.18);
+            background: rgba(13, 19, 30, 0.92);
+            box-shadow: inset 0 0 20px rgba(85, 231, 255, 0.025);
+        }
+
+        input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 4px rgba(85, 231, 255, 0.08), 0 0 22px rgba(85, 231, 255, 0.12);
+        }
+
+        button {
+            color: #071017;
+            background: linear-gradient(135deg, #b8f7ff 0%, #55e7ff 46%, #8d72ff 140%);
+            box-shadow: 0 0 18px rgba(85, 231, 255, 0.22), 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        button:hover {
+            box-shadow: 0 0 28px rgba(85, 231, 255, 0.42), 0 10px 28px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 560px) {
+            .header::before { left: 18px; }
         }
     </style>
 </head>

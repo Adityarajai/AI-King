@@ -543,7 +543,7 @@
             try {
                 const result = Function(`"use strict"; return (${mathExpression})`)();
                 removeThinking(thinkingId);
-                appendMessageWrapper(`[AI King]: Calculation ka jawab hai: **${result}**`, 'bot');
+                appendMessageWrapper(`[AI King]: Result: **${result}**`, 'bot');
                 return;
             } catch (e) {}
         }
@@ -582,11 +582,11 @@
                 if (webReply && webReply.trim().length > 0) {
                     appendMessageWrapper(`[AI King]: ${webReply}`, 'bot');
                 } else {
-                    appendMessageWrapper("[AI King]: Internet network busy hai. Kripya thodi der baad true search karein!", 'bot');
+                    appendMessageWrapper("[AI King]: Internet is busy. please try again letter!", 'bot');
                 }
             } catch (e) {
                 removeThinking(thinkingId);
-                appendMessageWrapper("[AI King]: Connection Timeout. Live data fetch nahi ho paya.", 'bot');
+                appendMessageWrapper("[AI King]: Connection Timeout. Live data could not be fetch.", 'bot');
             }
         }
     }

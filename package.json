@@ -2,6 +2,9 @@
   "name": "ai-king",
   "private": true,
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@netlify/blobs": "^10.7.13"
   }

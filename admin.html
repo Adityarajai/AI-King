@@ -35,16 +35,16 @@
 <main>
   <div class="top">
     <div><div class="eyebrow">PRIVATE ADMIN CONSOLE</div><h1>AI King Analytics</h1>
-      <div class="muted">Anonymous, consent-based search activity.</div></div>
-    <div class="muted">No passwords or personal identity collected</div>
+      <div class="muted">Consent-based visitor search activity.</div></div>
+    <div class="muted">Names are collected only when visitors continue</div>
   </div>
   <section class="cards">
     <div class="card"><span class="label">Total searches</span><strong class="value" id="total">—</strong></div>
     <div class="card"><span class="label">Unique visitors</span><strong class="value" id="visitors">—</strong></div>
     <div class="card"><span class="label">Last 24 hours</span><strong class="value" id="recent">—</strong></div>
   </section>
-  <div class="table-wrap"><table><thead><tr><th>Time</th><th>Visitor</th><th>Search</th><th>Device</th></tr></thead>
-    <tbody id="rows"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>Time</th><th>Name</th><th>Visitor ID</th><th>Search</th><th>Device</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table></div>
 </main>
 <script>
   const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) =>
@@ -55,7 +55,7 @@
   async function loadAnalytics() {
     const password = window.prompt('AI King Analytics password:');
     if (password === null) {
-      rows.innerHTML = '<tr><td colspan="4" class="muted">Authentication cancelled.</td></tr>';
+      rows.innerHTML = '<tr><td colspan="5" class="muted">Authentication cancelled.</td></tr>';
       return;
     }
 
@@ -63,7 +63,7 @@
     try {
       authorization = `Basic ${btoa(`admin:${password}`)}`;
     } catch (_) {
-      rows.innerHTML = '<tr><td colspan="4">Unable to prepare authentication.</td></tr>';
+      rows.innerHTML = '<tr><td colspan="5">Unable to prepare authentication.</td></tr>';
       return;
     }
 
@@ -71,7 +71,7 @@
       headers: { Accept: 'application/json', Authorization: authorization }
     });
     if (response.status === 401) {
-      rows.innerHTML = '<tr><td colspan="4">Incorrect admin password.</td></tr>';
+      rows.innerHTML = '<tr><td colspan="5">Incorrect admin password.</td></tr>';
       return;
     }
     if (!response.ok) throw new Error('Analytics storage is not available yet.');
@@ -81,13 +81,14 @@
       document.querySelector('#recent').textContent = data.summary.last_24_hours;
       rows.innerHTML = data.events.length ? data.events.map((event) => `
         <tr><td>${escapeHtml(new Date(event.created_at).toLocaleString())}</td>
+        <td>${escapeHtml(event.visitor_name || "—")}</td>
         <td><span class="pill">${escapeHtml(event.visitor_id)}</span></td>
         <td class="query">${escapeHtml(event.query)}</td><td>${escapeHtml(event.device)}</td></tr>`).join('')
-        : '<tr><td colspan="4" class="muted">No consented searches yet.</td></tr>';
+        : '<tr><td colspan="5" class="muted">No consented searches yet.</td></tr>';
   }
 
   loadAnalytics().catch((error) => {
-    rows.innerHTML = `<tr><td colspan="4">${escapeHtml(error.message)}</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
   });
 </script>
 </body>

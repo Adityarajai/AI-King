@@ -243,6 +243,30 @@
 
         .consent-copy strong { display: block; color: #fff; margin-bottom: 3px; }
 
+        .visitor-name-field { display: block; min-width: min(220px, 100%); }
+        .visitor-name-field input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(85, 231, 255, .2);
+            border-radius: 10px;
+            color: #fff;
+            background: rgba(13, 19, 30, .92);
+            font: inherit;
+            font-size: .82rem;
+        }
+        .visitor-name-field input:focus { outline: 2px solid rgba(85, 231, 255, .55); outline-offset: 1px; }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
         .consent-actions { display: flex; gap: 8px; flex-shrink: 0; }
         .consent-actions button { min-width: auto; min-height: 36px; padding: 0 14px; font-size: 0.75rem; }
         .consent-actions .secondary {
@@ -254,6 +278,7 @@
 
         @media (max-width: 560px) {
             .consent-banner { left: 12px; right: 12px; bottom: 12px; width: calc(100% - 24px); display: block; }
+            .visitor-name-field { margin-top: 12px; }
             .consent-actions { margin-top: 12px; }
         }
     </style>
@@ -270,12 +295,16 @@
 
         <aside class="consent-banner" id="consentBanner" hidden>
             <div class="consent-copy">
-                <strong>Help improve AI King</strong>
-                Allow anonymous search analytics so the admin can see search trends. Your name, password, and search history are not linked to your identity.
+                <strong>Welcome to AI King</strong>
+                What should we call you? Your name will personalize AI King and appear with your consented searches in the private admin dashboard.
             </div>
+            <label class="visitor-name-field" for="visitorName">
+                <span class="sr-only">Your name</span>
+                <input id="visitorName" type="text" maxlength="80" autocomplete="name" placeholder="Enter your name">
+            </label>
             <div class="consent-actions">
-                <button class="secondary" id="denyAnalytics" type="button">Not now</button>
-                <button id="allowAnalytics" type="button">Allow</button>
+                <button class="secondary" id="denyAnalytics" type="button">Skip</button>
+                <button id="allowAnalytics" type="button">Continue</button>
             </div>
         </aside>
 
@@ -286,13 +315,17 @@
     </main>
 
     <script>
-        const HISTORY_KEY = "aiKingMessages";
         const inputEl = document.getElementById("userInput");
         const chatBox = document.getElementById("chatBox");
         const sendButton = document.getElementById("sendButton");
         const chatForm = document.getElementById("chatForm");
         const consentBanner = document.getElementById("consentBanner");
+        const visitorNameInput = document.getElementById("visitorName");
         const ANALYTICS_CONSENT_KEY = "aiKingAnalyticsConsent";
+        const VISITOR_NAME_KEY = "aiKingVisitorName";
+        const NAME_PROMPT_COMPLETED_KEY = "aiKingNamePromptCompleted";
+
+        try { localStorage.removeItem("aiKingMessages"); } catch (_) {}
 
         function setAnalyticsConsent(value) {
             consentBanner.hidden = true;
@@ -304,49 +337,86 @@
             }
         }
 
+        function cleanVisitorName(value) {
+            return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, 80) : "";
+        }
+
+        function getVisitorName() {
+            try { return cleanVisitorName(localStorage.getItem(VISITOR_NAME_KEY) || ""); } catch (_) { return ""; }
+        }
+
+        function saveVisitorName(name) {
+            try { localStorage.setItem(VISITOR_NAME_KEY, name); } catch (_) {}
+        }
+
+        function markNamePromptCompleted() {
+            try { localStorage.setItem(NAME_PROMPT_COMPLETED_KEY, "true"); } catch (_) {}
+        }
+
+        function personalizeWelcome(name) {
+            const welcome = chatBox.querySelector("[data-welcome-message='true']");
+            if (welcome) welcome.textContent = name
+                ? `Hello ${name}, I am AI King. How can I help you?`
+                : "Hello, I am AI King. How can I help you?";
+        }
+
         function recordSearch(query) {
             let consent = "";
             try { consent = localStorage.getItem(ANALYTICS_CONSENT_KEY) || ""; } catch (_) {}
-            if (consent !== "granted") return;
+            const name = getVisitorName();
+            if (consent !== "granted" || !name) return;
             fetch("/api/analytics", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
-                body: JSON.stringify({ query, consent: true })
+                body: JSON.stringify({ query, name, consent: true })
             }).catch(() => {});
         }
 
-        document.getElementById("denyAnalytics").addEventListener("click", () => setAnalyticsConsent("denied"));
-        document.getElementById("allowAnalytics").addEventListener("click", () => setAnalyticsConsent("granted"));
+        document.getElementById("denyAnalytics").addEventListener("click", () => {
+            saveVisitorName("");
+            markNamePromptCompleted();
+            setAnalyticsConsent("denied");
+        });
+        document.getElementById("allowAnalytics").addEventListener("click", () => {
+            const name = cleanVisitorName(visitorNameInput.value);
+            if (!name) {
+                visitorNameInput.focus();
+                visitorNameInput.setCustomValidity("Please enter your name or choose Skip.");
+                visitorNameInput.reportValidity();
+                return;
+            }
+            visitorNameInput.setCustomValidity("");
+            saveVisitorName(name);
+            markNamePromptCompleted();
+            setAnalyticsConsent("granted");
+            personalizeWelcome(name);
+        });
+        visitorNameInput.addEventListener("input", () => visitorNameInput.setCustomValidity(""));
 
         let savedConsent = "";
         try { savedConsent = localStorage.getItem(ANALYTICS_CONSENT_KEY) || ""; } catch (_) {}
-        if (!savedConsent) {
+        const savedVisitorName = getVisitorName();
+        let namePromptCompleted = false;
+        try { namePromptCompleted = localStorage.getItem(NAME_PROMPT_COMPLETED_KEY) === "true"; } catch (_) {}
+        if (!namePromptCompleted) {
             consentBanner.hidden = false;
             consentBanner.removeAttribute("aria-hidden");
         }
+        visitorNameInput.value = savedVisitorName;
 
-        document.addEventListener("DOMContentLoaded", loadHistory);
+        document.addEventListener("DOMContentLoaded", showWelcome);
         chatForm.addEventListener("submit", event => {
             event.preventDefault();
             sendMessage();
         });
 
-        function loadHistory() {
-            let messages = [];
-            try { messages = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch (_) {}
-            if (!Array.isArray(messages) || messages.length === 0) {
-                appendMessage("Hello, I am Adity's AI, AI King. How can I help you?", "bot", false, false);
-                return;
-            }
-            messages.slice(-50).forEach(message => appendMessage(message.text, message.sender, false, false));
-        }
-
-        function saveMessage(text, sender) {
-            try {
-                const messages = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-                messages.push({ text, sender });
-                localStorage.setItem(HISTORY_KEY, JSON.stringify(messages.slice(-50)));
-            } catch (_) {}
+        function showWelcome() {
+            const name = getVisitorName();
+            const welcomeId = appendMessage(
+                name ? `Hello ${name}, I am AI King. How can I help you?` : "Hello, I am AI King. How can I help you?",
+                "bot"
+            );
+            document.getElementById(welcomeId)?.querySelector(".message")?.setAttribute("data-welcome-message", "true");
         }
 
         async function sendMessage() {
@@ -439,7 +509,7 @@
             } catch (_) { return null; }
         }
 
-        function appendMessage(text, sender, isThinking = false, save = true) {
+        function appendMessage(text, sender, isThinking = false) {
             const wrapper = document.createElement("div");
             const id = `msg-wrap-${crypto.randomUUID()}`;
             wrapper.id = id;
@@ -459,7 +529,6 @@
             wrapper.appendChild(message);
             chatBox.appendChild(wrapper);
             chatBox.scrollTop = chatBox.scrollHeight;
-            if (save && !isThinking) saveMessage(text, sender);
             return id;
         }
 

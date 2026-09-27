@@ -49,19 +49,46 @@
 <script>
   const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  fetch('/api/admin/events', { headers: { Accept: 'application/json' } })
-    .then((response) => response.ok ? response.json() : Promise.reject(new Error('Unable to load analytics')))
-    .then((data) => {
+
+  const rows = document.querySelector('#rows');
+
+  async function loadAnalytics() {
+    const password = window.prompt('AI King Analytics password:');
+    if (password === null) {
+      rows.innerHTML = '<tr><td colspan="4" class="muted">Authentication cancelled.</td></tr>';
+      return;
+    }
+
+    let authorization;
+    try {
+      authorization = `Basic ${btoa(`admin:${password}`)}`;
+    } catch (_) {
+      rows.innerHTML = '<tr><td colspan="4">Unable to prepare authentication.</td></tr>';
+      return;
+    }
+
+    const response = await fetch('/api/admin/events', {
+      headers: { Accept: 'application/json', Authorization: authorization }
+    });
+    if (response.status === 401) {
+      rows.innerHTML = '<tr><td colspan="4">Incorrect admin password.</td></tr>';
+      return;
+    }
+    if (!response.ok) throw new Error('Analytics storage is not available yet.');
+    const data = await response.json();
       document.querySelector('#total').textContent = data.summary.total;
       document.querySelector('#visitors').textContent = data.summary.unique_visitors;
       document.querySelector('#recent').textContent = data.summary.last_24_hours;
-      document.querySelector('#rows').innerHTML = data.events.length ? data.events.map((event) => `
+      rows.innerHTML = data.events.length ? data.events.map((event) => `
         <tr><td>${escapeHtml(new Date(event.created_at).toLocaleString())}</td>
         <td><span class="pill">${escapeHtml(event.visitor_id)}</span></td>
         <td class="query">${escapeHtml(event.query)}</td><td>${escapeHtml(event.device)}</td></tr>`).join('')
         : '<tr><td colspan="4" class="muted">No consented searches yet.</td></tr>';
-    })
-    .catch((error) => { document.querySelector('#rows').innerHTML = `<tr><td colspan="4">${escapeHtml(error.message)}</td></tr>`; });
+  }
+
+  loadAnalytics().catch((error) => {
+    rows.innerHTML = `<tr><td colspan="4">${escapeHtml(error.message)}</td></tr>`;
+  });
 </script>
 </body>
 </html>

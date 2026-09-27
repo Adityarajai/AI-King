@@ -1,0 +1,1 @@
+- [Netlify Blobs in Lambda handlers](netlify-blobs-lambda.md) — initialize the Blobs client with the Lambda event before calling `getStore`.

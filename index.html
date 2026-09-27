@@ -272,8 +272,8 @@
                 Allow anonymous search analytics so the admin can see search trends. Your name, password, and search history are not linked to your identity.
             </div>
             <div class="consent-actions">
-                <button class="secondary" type="button" onclick="setAnalyticsConsent('denied')">Not now</button>
-                <button type="button" onclick="setAnalyticsConsent('granted')">Allow</button>
+                <button class="secondary" id="denyAnalytics" type="button">Not now</button>
+                <button id="allowAnalytics" type="button">Allow</button>
             </div>
         </aside>
 
@@ -289,15 +289,23 @@
         const chatBox = document.getElementById("chatBox");
         const sendButton = document.getElementById("sendButton");
         const chatForm = document.getElementById("chatForm");
+        const consentBanner = document.getElementById("consentBanner");
         const ANALYTICS_CONSENT_KEY = "aiKingAnalyticsConsent";
 
         function setAnalyticsConsent(value) {
-            localStorage.setItem(ANALYTICS_CONSENT_KEY, value);
-            document.getElementById("consentBanner").hidden = true;
+            consentBanner.hidden = true;
+            consentBanner.setAttribute("aria-hidden", "true");
+            try {
+                localStorage.setItem(ANALYTICS_CONSENT_KEY, value);
+            } catch (_) {
+                // The banner still closes if browser storage is unavailable.
+            }
         }
 
         function recordSearch(query) {
-            if (localStorage.getItem(ANALYTICS_CONSENT_KEY) !== "granted") return;
+            let consent = "";
+            try { consent = localStorage.getItem(ANALYTICS_CONSENT_KEY) || ""; } catch (_) {}
+            if (consent !== "granted") return;
             fetch("/api/analytics", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -305,8 +313,14 @@
             }).catch(() => {});
         }
 
-        if (!localStorage.getItem(ANALYTICS_CONSENT_KEY)) {
-            document.getElementById("consentBanner").hidden = false;
+        document.getElementById("denyAnalytics").addEventListener("click", () => setAnalyticsConsent("denied"));
+        document.getElementById("allowAnalytics").addEventListener("click", () => setAnalyticsConsent("granted"));
+
+        let savedConsent = "";
+        try { savedConsent = localStorage.getItem(ANALYTICS_CONSENT_KEY) || ""; } catch (_) {}
+        if (!savedConsent) {
+            consentBanner.hidden = false;
+            consentBanner.removeAttribute("aria-hidden");
         }
 
         document.addEventListener("DOMContentLoaded", loadHistory);

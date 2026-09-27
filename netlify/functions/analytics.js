@@ -1,5 +1,5 @@
 const crypto = require("node:crypto");
-const { getStore } = require("@netlify/blobs");
+const { connectLambda, getStore } = require("@netlify/blobs");
 
 const MAX_QUERY_LENGTH = 2000;
 const STORE_NAME = "ai-king-analytics";
@@ -77,7 +77,7 @@ async function listEvents(store) {
 
 exports.handler = async (event) => {
   const method = event.httpMethod || "GET";
-  const store = getStore(STORE_NAME);
+  connectLambda(event);
 
   if (method === "POST") {
     let payload;
@@ -95,13 +95,19 @@ exports.handler = async (event) => {
     const createdAt = new Date().toISOString();
     const key = `event-${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
 
-    await store.setJSON(key, {
-      visitor_id: visitor.value,
-      query,
-      created_at: createdAt,
-      device: deviceFromUserAgent(userAgent),
-      consent_version: "2026-09-26",
-    });
+    try {
+      const store = getStore(STORE_NAME);
+      await store.setJSON(key, {
+        visitor_id: visitor.value,
+        query,
+        created_at: createdAt,
+        device: deviceFromUserAgent(userAgent),
+        consent_version: "2026-09-26",
+      });
+    } catch (error) {
+      console.error("Analytics storage is unavailable", error);
+      return json(503, { recorded: false, error: "Analytics storage unavailable" });
+    }
 
     const headers = {};
     if (visitor.isNew) {
@@ -114,7 +120,14 @@ exports.handler = async (event) => {
     const unauthorized = requireAdmin(event);
     if (unauthorized) return unauthorized;
 
-    const events = await listEvents(store);
+    let events;
+    try {
+      const store = getStore(STORE_NAME);
+      events = await listEvents(store);
+    } catch (error) {
+      console.error("Analytics storage is unavailable", error);
+      return json(503, { error: "Analytics storage unavailable" });
+    }
     const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     return json(200, {
       summary: {

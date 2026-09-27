@@ -12,13 +12,15 @@ The `Start application` workflow serves the site on port 5000.
 
 ## Private analytics
 
-Visitors see a consent banner before search events are recorded. If they allow
-anonymous analytics, the server stores the search text, an anonymous visitor
-ID, timestamp, and broad device category in `analytics.sqlite3`.
+Visitors are asked for their name before search events are recorded. If they
+continue, the server stores the name, search text, an anonymous visitor ID,
+timestamp, and broad device category in `analytics.sqlite3`. Visitors can skip
+the prompt; skipped visitors are not recorded.
 
 The private dashboard is available at `/admin`. It uses HTTP Basic
 Authentication with username `admin` and the `ADMIN_PASSWORD` Replit Secret.
-No password or personal identity is recorded as an analytics event.
+The name prompt explains that the name and consented searches appear in the
+private dashboard. Passwords are never recorded as analytics events.
 
 ## Netlify deployment
 

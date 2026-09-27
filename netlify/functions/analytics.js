@@ -36,6 +36,11 @@ function cleanQuery(value) {
   return value.replace(/\s+/g, " ").trim().slice(0, MAX_QUERY_LENGTH);
 }
 
+function cleanVisitorName(value) {
+  if (typeof value !== "string") return "";
+  return value.replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
 function adminIsAuthorized(event) {
   const password = process.env.ADMIN_PASSWORD || "";
   const header = event.headers?.authorization || event.headers?.Authorization || "";
@@ -88,7 +93,10 @@ exports.handler = async (event) => {
     }
 
     const query = cleanQuery(payload.query);
-    if (payload.consent !== true || !query) return json(200, { recorded: false });
+    const visitorName = cleanVisitorName(payload.name);
+    if (payload.consent !== true || !query || !visitorName) {
+      return json(200, { recorded: false });
+    }
 
     const visitor = visitorIdFromCookie(event.headers?.cookie || event.headers?.Cookie);
     const userAgent = event.headers?.["user-agent"] || event.headers?.["User-Agent"] || "";
@@ -99,6 +107,7 @@ exports.handler = async (event) => {
       const store = getStore(STORE_NAME);
       await store.setJSON(key, {
         visitor_id: visitor.value,
+        visitor_name: visitorName,
         query,
         created_at: createdAt,
         device: deviceFromUserAgent(userAgent),

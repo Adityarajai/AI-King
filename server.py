@@ -30,6 +30,7 @@ def initialize_database():
             CREATE TABLE IF NOT EXISTS search_events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 visitor_id TEXT NOT NULL,
+                visitor_name TEXT NOT NULL DEFAULT '',
                 query TEXT NOT NULL,
                 created_at TEXT NOT NULL,
                 device TEXT NOT NULL,
@@ -38,6 +39,11 @@ def initialize_database():
             )
             """
         )
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(search_events)")}
+        if "visitor_name" not in columns:
+            connection.execute(
+                "ALTER TABLE search_events ADD COLUMN visitor_name TEXT NOT NULL DEFAULT ''"
+            )
         connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_search_events_created_at "
             "ON search_events(created_at DESC)"
@@ -66,6 +72,12 @@ def clean_query(value):
     if not isinstance(value, str):
         return ""
     return " ".join(value.split())[:MAX_QUERY_LENGTH]
+
+
+def clean_visitor_name(value):
+    if not isinstance(value, str):
+        return ""
+    return " ".join(value.split())[:80]
 
 
 def wants_json(handler):
@@ -148,16 +160,16 @@ def admin_page():
 <main>
   <div class="top">
     <div><div class="eyebrow">PRIVATE ADMIN CONSOLE</div><h1>AI King Analytics</h1>
-      <div class="muted">Anonymous, consent-based search activity.</div></div>
-    <div class="muted">No passwords or personal identity collected</div>
+      <div class="muted">Consent-based visitor search activity.</div></div>
+    <div class="muted">Names are collected only when visitors continue</div>
   </div>
   <section class="cards">
     <div class="card"><span class="label">Total searches</span><strong class="value" id="total">—</strong></div>
     <div class="card"><span class="label">Unique visitors</span><strong class="value" id="visitors">—</strong></div>
     <div class="card"><span class="label">Last 24 hours</span><strong class="value" id="recent">—</strong></div>
   </section>
-  <div class="table-wrap"><table><thead><tr><th>Time</th><th>Visitor</th><th>Search</th><th>Device</th></tr></thead>
-    <tbody id="rows"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>Time</th><th>Name</th><th>Visitor ID</th><th>Search</th><th>Device</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table></div>
 </main>
 <script>
   const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) =>
@@ -170,9 +182,10 @@ def admin_page():
       document.querySelector('#recent').textContent = data.summary.last_24_hours;
       document.querySelector('#rows').innerHTML = data.events.length ? data.events.map((event) => `
         <tr><td>${escapeHtml(new Date(event.created_at).toLocaleString())}</td>
+        <td>${escapeHtml(event.visitor_name || "—")}</td>
         <td><span class="pill">${escapeHtml(event.visitor_id)}</span></td>
         <td class="query">${escapeHtml(event.query)}</td><td>${escapeHtml(event.device)}</td></tr>`).join('')
-        : '<tr><td colspan="4" class="muted">No consented searches yet.</td></tr>';
+        : '<tr><td colspan="5" class="muted">No consented searches yet.</td></tr>';
     })
     .catch((error) => { document.querySelector('#rows').innerHTML = `<tr><td colspan="4">${escapeHtml(error.message)}</td></tr>`; });
 </script>
@@ -204,7 +217,7 @@ class AIKingHandler(SimpleHTTPRequestHandler):
                 return
             with db_connection() as connection:
                 events = connection.execute(
-                    "SELECT visitor_id, query, created_at, device FROM search_events "
+                    "SELECT visitor_id, visitor_name, query, created_at, device FROM search_events "
                     "ORDER BY id DESC LIMIT 500"
                 ).fetchall()
                 total = connection.execute("SELECT COUNT(*) FROM search_events").fetchone()[0]
@@ -239,7 +252,8 @@ class AIKingHandler(SimpleHTTPRequestHandler):
             return
 
         query = clean_query(payload.get("query"))
-        if payload.get("consent") is not True or not query:
+        visitor_name = clean_visitor_name(payload.get("name"))
+        if payload.get("consent") is not True or not query or not visitor_name:
             json_response(self, {"recorded": False})
             return
 
@@ -249,9 +263,9 @@ class AIKingHandler(SimpleHTTPRequestHandler):
         with db_connection() as connection:
             connection.execute(
                 "INSERT INTO search_events "
-                "(visitor_id, query, created_at, device, user_agent, consent_version) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (visitor_id, query, created_at, device_from_user_agent(user_agent),
+                "(visitor_id, visitor_name, query, created_at, device, user_agent, consent_version) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (visitor_id, visitor_name, query, created_at, device_from_user_agent(user_agent),
                  "", "2026-09-26"),
             )
         headers = []
